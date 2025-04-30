@@ -4,6 +4,7 @@ import com.viciont.viciontprotections.ViciontProtections;
 import com.viciont.viciontprotections.database.DatabaseManager;
 import com.viciont.viciontprotections.models.Protection;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -38,10 +39,25 @@ public class ProtectionManager {
         ItemStack item = new ItemStack(Material.REDSTONE_BLOCK);
         ItemMeta meta = item.getItemMeta();
 
-        meta.setDisplayName(protectionName);
+        switch(type.toLowerCase()) {
+            case "small":
+                meta.setCustomModelData(1001);
+                break;
+            case "medium":
+                meta.setCustomModelData(1002);
+                break;
+            case "large":
+                meta.setCustomModelData(1003);
+                break;
+        }
+
+        meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + protectionName);
         List<String> lore = new ArrayList<>();
-        lore.add("§7Tamaño: §f" + size + "x" + size);
-        lore.add("§8Coloca este bloque para crear una protección.");
+        lore.add(" ");
+        lore.add("§7§l>> §3Tamaño: §f" + size + "x" + size);
+        lore.add(" ");
+        lore.add("§6Coloca este bloque para crear una protección.");
+        lore.add(" ");
         
         meta.setLore(lore);
         item.setItemMeta(meta);
@@ -58,28 +74,53 @@ public class ProtectionManager {
         }
         return null;
     }
-    
+
     public int getProtectionSize(ItemStack item) {
-        if (item.getType() != Material.REDSTONE_BLOCK || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
+        if (item == null || item.getType() != Material.REDSTONE_BLOCK || !item.hasItemMeta()) {
             return 0;
         }
-        
-        String displayName = item.getItemMeta().getDisplayName();
-        
+
+        ItemMeta meta = item.getItemMeta();
+
+        // Primero verificar CustomModelData
+        if (!meta.hasCustomModelData()) {
+            return 0;
+        }
+
+        int cmd = meta.getCustomModelData();
+        if (cmd != 1001 && cmd != 1002 && cmd != 1003) {
+            return 0;
+        }
+
+        // Luego verificar el nombre base (sin formatos)
+        String displayName = ChatColor.stripColor(meta.getDisplayName());
+
         for (String type : plugin.getConfig().getConfigurationSection("protection_types").getKeys(false)) {
             String protectionName = plugin.getConfig().getString("protection_types." + type + ".name");
             int size = plugin.getConfig().getInt("protection_types." + type + ".size");
-            
-            if (displayName.equals(protectionName)) {
+
+            if (displayName.equalsIgnoreCase(ChatColor.stripColor(protectionName))) {
                 return size;
             }
         }
-        
+
         return 0;
     }
-    
+
     public boolean isProtectionBlock(ItemStack item) {
-        return getProtectionSize(item) > 0;
+        if (item == null || item.getType() != Material.REDSTONE_BLOCK || !item.hasItemMeta()) {
+            return false;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+
+        // Verificar CustomModelData primero
+        if (!meta.hasCustomModelData()) {
+            return false;
+        }
+
+        int cmd = meta.getCustomModelData();
+        return cmd == 1001 || cmd == 1002 || cmd == 1003;
     }
     
     public Protection createProtection(Location location, int size, Player player) {

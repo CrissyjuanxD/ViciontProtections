@@ -30,6 +30,9 @@ Un basico y flexible sistema de protecciones para servidores de Minecraft que pe
 | `/memberlist`          | Lista todos los miembros de tu protección     | viciontprotections.user.owner |
 | `/prlist`              | Lista todas las protecciones                  | Ninguno                       |
 
+El comando /addowner y /delowner solo pueden ser utilizados por el propietario principal de la protección.
+Al ser propietaria normal de la protection, el jugador puede añadir o eliminar miembros de tu protección.
+
 ### Comandos de Administrador
 | Comando                                       | Descripción                                                | Permiso                           |
 |-----------------------------------------------|------------------------------------------------------------|-----------------------------------|
@@ -73,7 +76,7 @@ Ejemplos:
 
 ```yaml
   small:
-    name: "Protección Básica 32x32"
+    name: "Protección Básica"
     size: 32
     cost:
       - DIAMOND:1
@@ -87,6 +90,9 @@ Todas las configuraciones se pueden personalizar en `config.yml`:
 - Configuración de la base de datos
 - Tamaño de las protecciones
 - Nombre del bloque de protección
+
+_(**NOTA:** Cambiar de nombre un bloque de protección podría afectar a los bloques de protecciones que ya existen, por lo que se recomienda 
+cambiar el nombre del bloque de protección al inicio de la creación del plugin o mantener el nombre por defecto)_
 
 ## Permisos
 ### Permisos de Usuario
