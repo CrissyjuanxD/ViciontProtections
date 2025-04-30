@@ -9,7 +9,7 @@ messages:
   protection_created: "&2Has creado una nueva protección."
   protection_named: "&7Has nombrado tu protección como: &e%name%"
   protection_named1: "&7Has nombrado esta protección como: &e%name%"
-  protection_name_required: "&cDebes nombrar tu protección primero con /namepr <nombre>"
+  protection_name_required: "&cDebes nombrar tu protección primero con /addnamepr <nombre>"
   player_added: "&2Jugador &6%player% &2añadido a la protección."
   player_removed: "&cJugador &6%player% &celiminado de la protección."
   player_not_found: "&cJugador no encontrado."
