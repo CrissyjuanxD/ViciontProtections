@@ -1,0 +1,70 @@
+database:
+  type: sqlite
+  filename: protections.db
+  
+messages:
+  prefix: "&7&l[&r&5Viciont Protections&7&l] &r"
+  enter_protection: "&7Haz entrado a la protección &6%protection_name% &7de &6%owner%&e."
+  exit_protection: "&7Haz salido de la protección &6%protection_name%&e."
+  protection_created: "&2Has creado una nueva protección."
+  protection_named: "&7Has nombrado tu protección como: &e%name%"
+  protection_named1: "&7Has nombrado esta protección como: &e%name%"
+  protection_name_required: "&cDebes nombrar tu protección primero con /namepr <nombre>"
+  player_added: "&2Jugador &6%player% &2añadido a la protección."
+  player_removed: "&cJugador &6%player% &celiminado de la protección."
+  player_not_found: "&cJugador no encontrado."
+  owner_added: "&9Jugador &d%player% &9ahora es dueño de la protección."
+  owner_removed: "&cJugador &6%player% &celiminado como dueño de la protección."
+  no_permission: "&cNo tienes permiso para hacer eso."
+  config_reloaded: "&5&lConfiguración recargada correctamente"
+  not_in_protection: "&cNo estás en ninguna protección."
+  not_owner: "&cNo eres dueño de esta protección."
+  protection_deleted: "&cProtección eliminada."
+  protection_not_found: "&cProtección no encontrada."
+  invalid_arguments: "&cArgumentos inválidos."
+  protection_list: "&eProtecciones disponibles:"
+  protection_list_entry: "&e- &6%name% &e(Dueño: &6%owner%&e)"
+  no_protections: "&cNo hay protecciones disponibles."
+  protection_already_named: "&cEsta protección ya tiene nombre."
+  protection_name_changed: "&7Nombre de la protección cambiado a: &e%name%"
+  already_owner: "§cEste jugador ya es owner de la protección."
+  player_already_member: "§cEste jugador ya es miembro de la protección."
+  player_not_member: "§cEste jugador no es miembro de la protección."
+  no_delete_ownerprimary: "§cNo puedes eliminar al dueño principal."
+  not_owner1: "§cEste jugador no es owner de la protección."
+  only_ownerprimary: "§cSolo el dueño principal puede eliminar otros dueños."
+  villager_spawned: "&aComerciate de protecciones spawneado correctamente."
+  already_protected: "§cEsta ubicación ya está protegida."
+  error_creating_protection: "§4§lNo se pudo crear la protección."
+  no_permission_break: "§7No tienes permiso§r§7 para§c§l romper bloques§r§7 en esta protección."
+  no_permission_interact: "§7No tienes permiso§r§7 para§c§l interactuar§r§7 en esta protección."
+  no_permission_break_protection: "§cSolo el§6§l dueño principal§r§c puede romper este bloque."
+
+  
+protection_types:
+  small:
+    name: "Protección 32 x 32"
+    size: 32
+    cost:
+      - DIAMOND:1
+      - IRON_BLOCK:2
+  medium:
+    name: "Protección 64 x 64"
+    size: 64
+    cost:
+      - DIAMOND:2
+      - GOLD_BLOCK:4
+  large:
+    name: "Protección 128 x 128"
+    size: 128
+    cost:
+      - DIAMOND:3
+      - EMERALD_BLOCK:8
+
+villager:
+  name: "&c&lComerciante de Protecciones"
+  disable_ai: true
+  profession: "CLERIC"
+  level: 1
+  invulnerable: true
+  collidable: false

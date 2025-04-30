@@ -1,0 +1,110 @@
+name: ViciontProtections
+version: '${project.version}'
+main: com.viciont.viciontprotections.ViciontProtections
+api-version: 1.21
+authors: [CrissyjuanxD]
+description: Plugin para proteger zonas y otorgar permisos a protecciones.
+
+commands:
+  givepr:
+    description: Give a protection block to a player
+    usage: /givepr <type>
+    permission: viciontprotections.admin.give
+  
+  addnamepr:
+    description: añadir nombre a la protección
+    usage: /addnamepr <name>
+    permission: viciontprotections.user.name
+  
+  addmember:
+    description: añadir un miembro a la protección
+    usage: /addmember <name>
+    permission: viciontprotections.user.add
+  
+  delmember:
+    description: Eliminar un miembro de la protección
+    usage: /delmember <name>
+    permission: viciontprotections.user.del
+  
+  addowner:
+    description: Añadir un Owner(Administrador) a la protección
+    usage: /addowner <name>
+    permission: viciontprotections.user.owner
+  
+  ownerlist:
+    description: Muestra la lista de Owners(Administradores) de la protección actual
+    usage: /ownerlist
+    permission: viciontprotections.user.owner
+
+  memberlist:
+    description: Muestra la lista de miembros de la protección actual
+    usage: /memberlist
+    permission: viciontprotections.user.owner
+  
+  delowner:
+    description: Eliminar un Owner(Administrador) de la protección
+    usage: /delowner <name>
+    permission: viciontprotections.user.owner
+  
+  prlist:
+    description: Lista de protecciones disponibles
+    usage: /prlist
+  
+  newnamepr:
+    description: Establece un nombre para una protección sin nombre como OP
+    usage: /newnamepr <name>
+    permission: viciontprotections.admin.name
+  
+  modnamepr:
+    description: Modifica el nombre de una protección como OP
+    usage: /modnamepr <protection_name> <new_name>
+    permission: viciontprotections.admin.name
+  
+  modmember:
+    description: Modifica los miembros de una Protección como OP (Añadir o eliminar)
+    usage: /modmember <protection_name> <add/del> <name>
+    permission: viciontprotections.admin.mod
+  
+  modowner:
+    description: Modifica los Owners(Administradores) de una Protección como OP (Añadir o eliminar)
+    usage: /modowner <protection_name> <add/del> <name>
+    permission: viciontprotections.admin.owner
+  
+  removepr:
+    description: Eliminar una protección.
+    usage: /removepr <protection_name>
+    permission: viciontprotections.admin.remove
+
+  prvillager:
+    description: Spawnea un comerciante de protecciones en la ubicación actual
+    usage: /prvillager [x] [y] [z]
+    permission: viciontprotections.admin.villager
+
+  vpreload:
+    description: Recarga la configuración del plugin
+    usage: /vpreload
+    permission: viciontprotections.admin.reload
+
+permissions:
+  viciontprotections.user.*:
+    description: Gives access to all user commands
+    default: true
+    children:
+      viciontprotections.user.name: true
+      viciontprotections.user.add: true
+      viciontprotections.user.del: true
+      viciontprotections.user.owner: true
+
+  viciontprotections.admin.*:
+    description: Gives access to all admin commands
+    children:
+      viciontprotections.admin.give: true
+      viciontprotections.admin.mod: true
+      viciontprotections.admin.owner: true
+      viciontprotections.admin.remove: true
+      viciontprotections.admin.name: true
+      viciontprotections.admin.villager: true
+
+  viciontprotections.admin.reload:
+    description: Permite recargar la configuración del plugin
+    default: op
