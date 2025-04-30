@@ -120,7 +120,7 @@ viciontprotections.admin.*:
 ```
 
 ## Instalación
-1. Descarga el archivo JAR del plugin
+1. Descarga el archivo JAR del plugin: _https://github.com/CrissyjuanxD/ViciontProtections/releases_
 2. Colócalo en la carpeta `plugins` de tu servidor
 3. Reinicia el servidor
 4. Configura el plugin en `config.yml` si es necesario
