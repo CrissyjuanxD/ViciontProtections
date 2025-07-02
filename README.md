@@ -127,7 +127,7 @@ viciontprotections.admin.*:
 
 ## Versiones Compatibles
 Compatible con las version de Minecraft:
-- 1.21 - 1.21.1 - 1.21.2(Not Tested)
+- 1.21.x
 
 Versiones que tengo pensada que sean compatibles:
 - 1.20.x
