@@ -1,110 +1,121 @@
 name: ViciontProtections
-version: '${project.version}'
+version: ${project.version}
 main: com.viciont.viciontprotections.ViciontProtections
-api-version: 1.21
-authors: [CrissyjuanxD]
-description: Plugin para proteger zonas y otorgar permisos a protecciones.
-
+api-version: '1.21'
+authors:
+- CrissyjuanxD
+website: https://github.com/CrissyjuanxD/ViciontProtections
+description: Protecciones WorldGuard con nombres, API, SQL y diálogos.
+depend:
+- WorldGuard
+- WorldEdit
+softdepend:
+- ViaVersion
 commands:
+  proteccion:
+    description: Gestiona protecciones y abre su diálogo cuando la versión lo permite.
+    aliases:
+    - pr
+    - protections
+    - proteccionv
+    - vp
+    usage: /pr ayuda
   givepr:
-    description: Give a protection block to a player
-    usage: /givepr <type>
-    permission: viciontprotections.admin.give
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   addnamepr:
-    description: añadir nombre a la protección
-    usage: /addnamepr <name>
-    permission: viciontprotections.user.name
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   addmember:
-    description: añadir un miembro a la protección
-    usage: /addmember <name>
-    permission: viciontprotections.user.add
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   delmember:
-    description: Eliminar un miembro de la protección
-    usage: /delmember <name>
-    permission: viciontprotections.user.del
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   addowner:
-    description: Añadir un Owner(Administrador) a la protección
-    usage: /addowner <name>
-    permission: viciontprotections.user.owner
-  
-  ownerlist:
-    description: Muestra la lista de Owners(Administradores) de la protección actual
-    usage: /ownerlist
-    permission: viciontprotections.user.owner
-
-  memberlist:
-    description: Muestra la lista de miembros de la protección actual
-    usage: /memberlist
-    permission: viciontprotections.user.owner
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   delowner:
-    description: Eliminar un Owner(Administrador) de la protección
-    usage: /delowner <name>
-    permission: viciontprotections.user.owner
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
+  ownerlist:
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
+  memberlist:
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   prlist:
-    description: Lista de protecciones disponibles
-    usage: /prlist
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   newnamepr:
-    description: Establece un nombre para una protección sin nombre como OP
-    usage: /newnamepr <name>
-    permission: viciontprotections.admin.name
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   modnamepr:
-    description: Modifica el nombre de una protección como OP
-    usage: /modnamepr <protection_name> <new_name>
-    permission: viciontprotections.admin.name
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   modmember:
-    description: Modifica los miembros de una Protección como OP (Añadir o eliminar)
-    usage: /modmember <protection_name> <add/del> <name>
-    permission: viciontprotections.admin.mod
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   modowner:
-    description: Modifica los Owners(Administradores) de una Protección como OP (Añadir o eliminar)
-    usage: /modowner <protection_name> <add/del> <name>
-    permission: viciontprotections.admin.owner
-  
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   removepr:
-    description: Eliminar una protección.
-    usage: /removepr <protection_name>
-    permission: viciontprotections.admin.remove
-
-  prvillager:
-    description: Spawnea un comerciante de protecciones en la ubicación actual
-    usage: /prvillager [x] [y] [z]
-    permission: viciontprotections.admin.villager
-
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
   vpreload:
-    description: Recarga la configuración del plugin
-    usage: /vpreload
-    permission: viciontprotections.admin.reload
-
+    description: Comando compatible de ViciontProtections; consulta /pr ayuda.
 permissions:
-  viciontprotections.user.*:
-    description: Gives access to all user commands
-    default: true
-    children:
-      viciontprotections.user.name: true
-      viciontprotections.user.add: true
-      viciontprotections.user.del: true
-      viciontprotections.user.owner: true
-
-  viciontprotections.admin.*:
-    description: Gives access to all admin commands
-    children:
-      viciontprotections.admin.give: true
-      viciontprotections.admin.mod: true
-      viciontprotections.admin.owner: true
-      viciontprotections.admin.remove: true
-      viciontprotections.admin.name: true
-      viciontprotections.admin.villager: true
-
-  viciontprotections.admin.reload:
-    description: Permite recargar la configuración del plugin
+  viciontprotections.user.create:
+    description: Permite la función create respetando el rol en cada protección.
     default: op
+  viciontprotections.user.list:
+    description: Permite la función list respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.info:
+    description: Permite la función info respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.members:
+    description: Permite la función members respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.owners:
+    description: Permite la función owners respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.name:
+    description: Permite la función name respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.delete:
+    description: Permite la función delete respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.borders:
+    description: Permite la función borders respetando el rol en cada protección.
+    default: op
+  viciontprotections.user.*:
+    description: Conjunto de permisos de uso.
+    default: op
+    children:
+      viciontprotections.user.create: true
+      viciontprotections.user.list: true
+      viciontprotections.user.info: true
+      viciontprotections.user.members: true
+      viciontprotections.user.owners: true
+      viciontprotections.user.name: true
+      viciontprotections.user.delete: true
+      viciontprotections.user.borders: true
+  viciontprotections.admin.manage:
+    description: Permite la función manage respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.give:
+    description: Permite la función give respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.selection:
+    description: Permite la función selection respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.flags:
+    description: Permite la función flags respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.transfer:
+    description: Permite la función transfer respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.reload:
+    description: Permite la función reload respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.list:
+    description: Permite la función list respetando el rol en cada protección.
+    default: op
+  viciontprotections.admin.*:
+    description: Conjunto de permisos de administración.
+    default: op
+    children:
+      viciontprotections.admin.manage: true
+      viciontprotections.admin.give: true
+      viciontprotections.admin.selection: true
+      viciontprotections.admin.flags: true
+      viciontprotections.admin.transfer: true
+      viciontprotections.admin.reload: true
+      viciontprotections.admin.list: true

@@ -1,203 +1,399 @@
 package com.viciont.viciontprotections.managers;
 
-import com.viciont.viciontprotections.ViciontProtections;
+import com.viciont.viciontprotections.api.*;
+import com.viciont.viciontprotections.api.event.*;
 import com.viciont.viciontprotections.database.DatabaseManager;
+import com.viciont.viciontprotections.integration.WorldGuardBridge;
 import com.viciont.viciontprotections.models.Protection;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
+import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.function.*;
+import org.bukkit.*;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
-public class ProtectionManager {
+public final class ProtectionManager implements ViciontProtectionsApi {
+  private final JavaPlugin plugin;
+  private final DatabaseManager store;
+  private final WorldGuardBridge guard;
+  private final ProtectionItems items;
+  private final Map<UUID, Protection> protections = new ConcurrentHashMap<>();
+  private final Set<UUID> pending = new HashSet<>();
 
-    private final ViciontProtections plugin;
-    private final DatabaseManager databaseManager;
-    private final Map<UUID, Protection> playerCurrentProtection;
+  private record AnchorKey(String world, int x, int y, int z) {}
 
-    // Lista de jugadores obligados a nombrar la protección
-    public final Set<UUID> playersNeedingToName = ConcurrentHashMap.newKeySet();
+  private final Map<AnchorKey, UUID> anchors = new HashMap<>();
 
-    public ProtectionManager(ViciontProtections plugin, DatabaseManager databaseManager) {
-        this.plugin = plugin;
-        this.databaseManager = databaseManager;
-        this.playerCurrentProtection = new HashMap<>();
+  public ProtectionManager(JavaPlugin plugin, DatabaseManager store, WorldGuardBridge guard)
+      throws SQLException {
+    this.plugin = plugin;
+    this.store = store;
+    this.guard = guard;
+    this.items = new ProtectionItems(plugin);
+    for (Protection protection : store.loadAll()) put(protection);
+    for (World world : Bukkit.getWorlds()) guard.reconcile(world, protections.values());
+  }
 
-        loadProtections();
+  public WorldGuardBridge guard() {
+    return guard;
+  }
+
+  public boolean isPending(UUID id) {
+    return pending.contains(id);
+  }
+
+  public void worldLoaded(World world) {
+    guard.reconcile(world, protections.values());
+  }
+
+  public ItemStack createProtectionBlock(ProtectionBlock block, int amount) {
+    requireMain();
+    return items.create(block, amount);
+  }
+
+  public Optional<ProtectionBlock> readProtectionBlock(ItemStack item) {
+    requireMain();
+    return items.read(item);
+  }
+
+  public Optional<Protection> getProtection(UUID id) {
+    return Optional.ofNullable(protections.get(id));
+  }
+
+  public Optional<Protection> getProtectionAt(Location location) {
+    requireMain();
+    return guard.at(location).stream()
+        .map(protections::get)
+        .filter(Objects::nonNull)
+        .min(Comparator.comparing(Protection::createdAt));
+  }
+
+  public List<Protection> getProtections() {
+    return protections.values().stream()
+        .sorted(
+            Comparator.comparing(Protection::name, String.CASE_INSENSITIVE_ORDER)
+                .thenComparing(Protection::id))
+        .toList();
+  }
+
+  public List<Protection> getProtections(UUID player) {
+    return getProtections().stream().filter(p -> p.canAccess(player)).toList();
+  }
+
+  public boolean canAccess(UUID id, UUID player) {
+    return getProtection(id).map(p -> p.canAccess(player)).orElse(false);
+  }
+
+  private AnchorKey key(Protection p) {
+    Anchor a = p.anchor();
+    return a == null ? null : new AnchorKey(p.worldName(), a.x(), a.y(), a.z());
+  }
+
+  private void put(Protection p) {
+    protections.put(p.id(), p);
+    if (key(p) != null) anchors.put(key(p), p.id());
+  }
+
+  private void remove(UUID id) {
+    Protection p = protections.remove(id);
+    if (p != null && key(p) != null) anchors.remove(key(p), id);
+  }
+
+  public Optional<Protection> anchorAt(Location location) {
+    UUID id =
+        anchors.get(
+            new AnchorKey(
+                location.getWorld().getName(),
+                location.getBlockX(),
+                location.getBlockY(),
+                location.getBlockZ()));
+    return id == null ? Optional.empty() : getProtection(id);
+  }
+
+  public Protection resolve(String selector) {
+    String value = selector.startsWith("#") ? selector.substring(1) : selector;
+    List<Protection> matches =
+        getProtections().stream()
+            .filter(
+                p ->
+                    p.id().toString().equalsIgnoreCase(value)
+                        || p.shortId().equalsIgnoreCase(value)
+                        || p.name().equalsIgnoreCase(selector))
+            .toList();
+    if (matches.size() != 1)
+      throw new ProtectionException(
+          matches.isEmpty()
+              ? "No se encontró esa protección."
+              : "Hay varios nombres iguales; usa el identificador # de la lista.");
+    return matches.getFirst();
+  }
+
+  public static String validName(String name) {
+    String value =
+        Normalizer.normalize(Objects.requireNonNullElse(name, ""), Normalizer.Form.NFKC)
+            .trim()
+            .replaceAll(" +", " ");
+    if (!value.matches("[\\p{L}\\p{N} ._#-]{1,48}"))
+      throw new ProtectionException(
+          "El nombre debe tener entre 1 y 48 letras, números, espacios, puntos, guiones o #.");
+    return value;
+  }
+
+  public CompletableFuture<Protection> createProtection(CreateProtectionRequest request) {
+    return main(
+        () -> {
+          guard.validate(request, null);
+          UUID id = UUID.randomUUID();
+          if (request.anchor() != null
+              && !request
+                  .bounds()
+                  .contains(request.anchor().x(), request.anchor().y(), request.anchor().z()))
+            throw new ProtectionException("El bloque protector debe estar dentro de la región.");
+          String name =
+              request.name() == null || request.name().isBlank()
+                  ? "Protección #" + id.toString().substring(0, 8)
+                  : validName(request.name());
+          Protection protection =
+              new Protection(
+                  id,
+                  name,
+                  request.worldName(),
+                  request.bounds(),
+                  request.primaryOwner(),
+                  Set.of(),
+                  Set.of(),
+                  Map.of(),
+                  request.anchor(),
+                  System.currentTimeMillis());
+          return persist(null, protection);
+        });
+  }
+
+  public CompletableFuture<Protection> renameProtection(UUID id, String name) {
+    return change(id, p -> p.withName(validName(name)));
+  }
+
+  public CompletableFuture<Protection> addMember(UUID id, UUID target) {
+    return change(
+        id,
+        p -> {
+          if (p.canAccess(target))
+            throw new ProtectionException("Ese jugador ya tiene acceso a la protección.");
+          var members = new HashSet<>(p.members());
+          members.add(target);
+          return p.withRoles(p.primaryOwner(), p.owners(), members);
+        });
+  }
+
+  public CompletableFuture<Protection> removeMember(UUID id, UUID target) {
+    return change(
+        id,
+        p -> {
+          if (!p.members().contains(target))
+            throw new ProtectionException(
+                "Ese jugador no es miembro. Los propietarios se gestionan por separado.");
+          var members = new HashSet<>(p.members());
+          members.remove(target);
+          return p.withRoles(p.primaryOwner(), p.owners(), members);
+        });
+  }
+
+  public CompletableFuture<Protection> addOwner(UUID id, UUID target) {
+    return change(
+        id,
+        p -> {
+          if (p.isOwner(target)) throw new ProtectionException("Ese jugador ya es propietario.");
+          var owners = new HashSet<>(p.owners());
+          var members = new HashSet<>(p.members());
+          owners.add(target);
+          members.remove(target);
+          return p.withRoles(p.primaryOwner(), owners, members);
+        });
+  }
+
+  public CompletableFuture<Protection> removeOwner(UUID id, UUID target) {
+    return change(
+        id,
+        p -> {
+          if (p.primaryOwner().equals(target))
+            throw new ProtectionException("No puedes eliminar al creador de la protección.");
+          if (!p.owners().contains(target))
+            throw new ProtectionException("Ese jugador no es un propietario añadido.");
+          var owners = new HashSet<>(p.owners());
+          owners.remove(target);
+          return p.withRoles(p.primaryOwner(), owners, p.members());
+        });
+  }
+
+  public CompletableFuture<Protection> transferOwnership(UUID id, UUID target) {
+    return change(
+        id,
+        p -> {
+          var owners = new HashSet<>(p.owners());
+          var members = new HashSet<>(p.members());
+          owners.remove(target);
+          members.remove(target);
+          owners.add(p.primaryOwner());
+          owners.remove(target);
+          return p.withRoles(target, owners, members);
+        });
+  }
+
+  public CompletableFuture<Protection> setFlag(UUID id, String flag, String value) {
+    return change(
+        id,
+        p -> {
+          String name = guard.stateFlag(flag).getName();
+          var flags = new HashMap<>(p.flags());
+          switch (value.toLowerCase(Locale.ROOT)) {
+            case "permitir", "allow" -> flags.put(name, "ALLOW");
+            case "denegar", "deny" -> flags.put(name, "DENY");
+            case "restablecer", "reset" -> flags.remove(name);
+            default -> throw new ProtectionException("Usa permitir, denegar o restablecer.");
+          }
+          return p.withFlags(flags);
+        });
+  }
+
+  public CompletableFuture<Void> deleteProtection(UUID id) {
+    return main(() -> persist(required(id), null).thenApply(p -> null));
+  }
+
+  private CompletableFuture<Protection> change(UUID id, UnaryOperator<Protection> change) {
+    return main(
+        () -> {
+          Protection old = required(id);
+          return persist(old, change.apply(old));
+        });
+  }
+
+  private Protection required(UUID id) {
+    return getProtection(id)
+        .orElseThrow(() -> new ProtectionException("La protección ya no existe."));
+  }
+
+  private CompletableFuture<Protection> persist(Protection old, Protection next) {
+    UUID id = old == null ? next.id() : old.id();
+    if (!pending.add(id))
+      throw new ProtectionException(
+          "Hay una operación en curso para esta protección. Espera un momento.");
+    try {
+      var event = new ProtectionChangingEvent(old, next);
+      Bukkit.getPluginManager().callEvent(event);
+      if (event.isCancelled())
+        throw new ProtectionException("Otro plugin ha cancelado la operación.");
+      if (old == null)
+        guard.validate(
+            new CreateProtectionRequest(
+                next.primaryOwner(), next.worldName(), next.bounds(), next.name(), next.anchor()),
+            null);
+      if (next != null) {
+        guard.apply(next);
+        put(next);
+      }
+    } catch (RuntimeException failure) {
+      pending.remove(id);
+      throw failure;
     }
+    CompletableFuture<Protection> result = new CompletableFuture<>();
+    CompletableFuture<Void> write = next == null ? store.delete(id) : store.save(next);
+    write.whenComplete(
+        (ignored, failure) -> {
+          if (!plugin.isEnabled()) {
+            result.completeExceptionally(
+                new ProtectionException(
+                    "El servidor se está apagando; el estado se recuperará al iniciar."));
+            return;
+          }
+          Bukkit.getScheduler()
+              .runTask(
+                  plugin,
+                  () -> {
+                    pending.remove(id);
+                    try {
+                      if (failure != null) {
+                        if (old == null) {
+                          guard.remove(next);
+                          remove(id);
+                        } else {
+                          guard.apply(old);
+                          put(old);
+                        }
+                        plugin
+                            .getLogger()
+                            .severe(
+                                "No se pudo guardar la protección "
+                                    + id
+                                    + ". Se restauró su estado anterior. Causa: "
+                                    + failure.getClass().getSimpleName());
+                        result.completeExceptionally(
+                            new ProtectionException(
+                                "No se pudo guardar el cambio. La protección conserva su estado"
+                                    + " anterior."));
+                        return;
+                      }
+                      if (next == null) {
+                        guard.remove(old);
+                        remove(id);
+                        removeAnchor(old);
+                      }
+                      Bukkit.getPluginManager().callEvent(new ProtectionChangedEvent(old, next));
+                      result.complete(next);
+                    } catch (RuntimeException synchronizationFailure) {
+                      plugin
+                          .getLogger()
+                          .log(
+                              java.util.logging.Level.SEVERE,
+                              "No se pudo sincronizar la protección " + id + " con WorldGuard.",
+                              synchronizationFailure);
+                      result.completeExceptionally(
+                          new ProtectionException(
+                              "No se pudo sincronizar la protección. Revisa la consola antes de"
+                                  + " continuar."));
+                    }
+                  });
+        });
+    return result;
+  }
 
-    private void loadProtections() {
-        plugin.getLogger().info("Loading protections from database...");
+  private void removeAnchor(Protection old) {
+    Anchor anchor = old.anchor();
+    World world = Bukkit.getWorld(old.worldName());
+    if (anchor != null && world != null) {
+      var block = world.getBlockAt(anchor.x(), anchor.y(), anchor.z());
+      if (block.getType() == anchor.block().material()) block.setType(Material.AIR, false);
     }
+  }
 
-    public ItemStack createProtectionBlock(String type) {
-        String protectionName = plugin.getConfig().getString("protection_types." + type + ".name");
-        int size = plugin.getConfig().getInt("protection_types." + type + ".size");
-
-        ItemStack item = new ItemStack(Material.REDSTONE_BLOCK);
-        ItemMeta meta = item.getItemMeta();
-
-        switch(type.toLowerCase()) {
-            case "small": meta.setCustomModelData(1001); break;
-            case "medium": meta.setCustomModelData(1002); break;
-            case "large": meta.setCustomModelData(1003); break;
-        }
-
-        meta.setDisplayName(ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + protectionName);
-        List<String> lore = new ArrayList<>();
-        lore.add(" ");
-        lore.add("§7§l>> §3Tamaño: §f" + size + "x" + size);
-        lore.add(" ");
-        lore.add("§6Coloca este bloque para crear una protección.");
-        lore.add(" ");
-
-        meta.setLore(lore);
-        item.setItemMeta(meta);
-
-        return item;
+  private <T> CompletableFuture<T> main(Supplier<CompletableFuture<T>> action) {
+    if (!plugin.isEnabled())
+      return CompletableFuture.failedFuture(
+          new ProtectionException("El plugin no está disponible."));
+    if (Bukkit.isPrimaryThread()) {
+      try {
+        return action.get();
+      } catch (RuntimeException failure) {
+        return CompletableFuture.failedFuture(failure);
+      }
     }
+    CompletableFuture<T> result = new CompletableFuture<>();
+    Bukkit.getScheduler()
+        .runTask(
+            plugin,
+            () ->
+                main(action)
+                    .whenComplete(
+                        (value, error) -> {
+                          if (error == null) result.complete(value);
+                          else result.completeExceptionally(error);
+                        }));
+    return result;
+  }
 
-    public String getProtectionType(int size) {
-        for (String type : plugin.getConfig().getConfigurationSection("protection_types").getKeys(false)) {
-            int protectionSize = plugin.getConfig().getInt("protection_types." + type + ".size");
-            if (protectionSize == size) return type;
-        }
-        return null;
-    }
-
-    public int getProtectionSize(ItemStack item) {
-        if (item == null || item.getType() != Material.REDSTONE_BLOCK || !item.hasItemMeta()) return 0;
-        ItemMeta meta = item.getItemMeta();
-        if (!meta.hasCustomModelData()) return 0;
-
-        int cmd = meta.getCustomModelData();
-        if (cmd != 1001 && cmd != 1002 && cmd != 1003) return 0;
-
-        String displayName = ChatColor.stripColor(meta.getDisplayName());
-        for (String type : plugin.getConfig().getConfigurationSection("protection_types").getKeys(false)) {
-            String protectionName = plugin.getConfig().getString("protection_types." + type + ".name");
-            int size = plugin.getConfig().getInt("protection_types." + type + ".size");
-            if (displayName.equalsIgnoreCase(ChatColor.stripColor(protectionName))) return size;
-        }
-        return 0;
-    }
-
-    public boolean isProtectionBlock(ItemStack item) {
-        if (item == null || item.getType() != Material.REDSTONE_BLOCK || !item.hasItemMeta()) return false;
-        ItemMeta meta = item.getItemMeta();
-        if (!meta.hasCustomModelData()) return false;
-        int cmd = meta.getCustomModelData();
-        return cmd == 1001 || cmd == 1002 || cmd == 1003;
-    }
-
-    public Protection createProtection(Location location, int size, Player player, String name) {
-        Location center = new Location(location.getWorld(), location.getBlockX(), location.getBlockY(), location.getBlockZ());
-        int protectionId = databaseManager.createProtection(center, size, name);
-
-        if (protectionId != -1) {
-            Protection protection = new Protection(protectionId, name, center, size);
-            protection.setPrimaryOwner(player.getUniqueId());
-            databaseManager.addProtectionOwner(protectionId, player.getUniqueId(), true);
-            protection.visualizeBoundaries();
-            return protection;
-        }
-        return null;
-    }
-
-    public boolean isLocationProtected(Location location) { return databaseManager.getProtectionByLocation(location) != null; }
-    public Protection getProtectionAt(Location location) { return databaseManager.getProtectionByLocation(location); }
-    public Protection getProtectionById(int id) { return databaseManager.getProtectionById(id); }
-    public Protection getProtectionByName(String name) { return databaseManager.getProtectionByName(name); }
-
-    public void setProtectionName(Protection protection, String name) {
-        protection.setName(name);
-        databaseManager.setProtectionName(protection.getId(), name);
-    }
-
-    public void addMember(Protection protection, UUID playerUuid) {
-        if (protection.isMember(playerUuid)) return;
-        databaseManager.addProtectionMember(protection.getId(), playerUuid);
-        protection.addMember(playerUuid);
-        refreshProtectionCache(protection);
-    }
-
-    public void removeMember(Protection protection, UUID playerUuid) {
-        if (!protection.isMember(playerUuid)) return;
-        databaseManager.removeProtectionMember(protection.getId(), playerUuid);
-        protection.removeMember(playerUuid);
-        refreshProtectionCache(protection);
-    }
-
-    public void addOwner(Protection protection, UUID playerUuid) {
-        if (protection.isOwner(playerUuid)) return;
-        protection.addOwner(playerUuid);
-        databaseManager.addProtectionOwner(protection.getId(), playerUuid, false);
-        if (!protection.isMember(playerUuid)) addMember(protection, playerUuid);
-        refreshProtectionCache(protection);
-    }
-
-    public void removeOwner(Protection protection, UUID playerUuid) {
-        if (!playerUuid.equals(protection.getPrimaryOwner())) {
-            databaseManager.removeProtectionOwner(protection.getId(), playerUuid);
-        }
-        protection.removeOwner(playerUuid);
-        refreshProtectionCache(protection);
-        if (protection.isMember(playerUuid)) removeMember(protection, playerUuid);
-    }
-
-    public void deleteProtection(Protection protection) { databaseManager.deleteProtection(protection.getId()); }
-
-    public void updatePlayerProtection(Player player) {
-        Protection currentProtection = getProtectionAt(player.getLocation());
-        Protection previousProtection = playerCurrentProtection.get(player.getUniqueId());
-
-        if (currentProtection != null && (previousProtection == null || previousProtection.getId() != currentProtection.getId())) {
-            playerCurrentProtection.put(player.getUniqueId(), currentProtection);
-            if (currentProtection.getName() != null) {
-                String message = plugin.getConfig().getString("messages.enter_protection")
-                        .replace("%protection_name%", currentProtection.getName())
-                        .replace("%owner%", currentProtection.getPrimaryOwnerName());
-                player.sendMessage(plugin.formatMessage(message));
-            }
-        } else if (currentProtection == null && previousProtection != null) {
-            playerCurrentProtection.remove(player.getUniqueId());
-            if (previousProtection.getName() != null) {
-                String message = plugin.getConfig().getString("messages.exit_protection")
-                        .replace("%protection_name%", previousProtection.getName());
-                player.sendMessage(plugin.formatMessage(message));
-            }
-        }
-    }
-
-    public void refreshProtectionCache(Protection protection) {
-        Protection updatedProtection = databaseManager.getProtectionById(protection.getId());
-        if (updatedProtection != null) {
-            Bukkit.getOnlinePlayers().forEach(player -> {
-                Protection current = playerCurrentProtection.get(player.getUniqueId());
-                if (current != null && current.getId() == protection.getId()) {
-                    playerCurrentProtection.put(player.getUniqueId(), updatedProtection);
-                }
-            });
-        }
-    }
-
-    public Protection getProtectionByNameWithRefresh(String name) {
-        Protection protection = databaseManager.getProtectionByName(name);
-        if (protection != null) refreshProtectionCache(protection);
-        return protection;
-    }
-
-    public Protection getPlayerCurrentProtection(Player player) { return playerCurrentProtection.get(player.getUniqueId()); }
-    public List<Protection> getAllProtections() { return databaseManager.getAllProtections(); }
-
-    public List<String> getProtectionTypes() {
-        List<String> types = new ArrayList<>();
-        for (String type : plugin.getConfig().getConfigurationSection("protection_types").getKeys(false)) types.add(type);
-        return types;
-    }
+  private static void requireMain() {
+    if (!Bukkit.isPrimaryThread())
+      throw new IllegalStateException("Esta consulta requiere el hilo principal de Bukkit.");
+  }
 }

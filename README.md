@@ -1,149 +1,212 @@
-<h1 align="center"> Viciont Protections </h1>
+<div align="center">
 
-<p align="center">
-<img src="https://github.com/CrissyjuanxD/imagenes_ropositorios/blob/main/VP_TITLE.png" />
-</p>
+# ۞ ViciontProtections
 
-Un basico y flexible sistema de protecciones para servidores de Minecraft que permite a los jugadores crear y gestionar áreas protegidas.
+**Tu terreno, tu nombre, tus reglas.**
 
-## Características
+Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos morados y rosas.
 
-- Crea zonas de protección de diferentes tamaños personalizables
-- Sistema de múltiples propietarios
-- Gestión de miembros
-- Nombres personalizados para las protecciones
-- Límites visuales con bloques de lana amarilla temporales (1 minuto)
-- Sistema de comercio con aldeano personalizado
-- Almacenamiento en base de datos SQLite
+![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
+![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
+![Versión](https://img.shields.io/badge/Versión-2.0.0-B995E8)
+![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
-## Comandos
+[Guía](#-guía-para-jugadores) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
 
-### Comandos para Jugadores
-| Comando                | Descripción                                   | Permiso                       |
-|------------------------|-----------------------------------------------|-------------------------------|
-| `/addnamepr <nombre>`  | Nombra tu protección                          | viciontprotections.user.name  |
-| `/addmember <jugador>` | Añade un jugador a tu protección              | viciontprotections.user.add   |
-| `/delmember <jugador>` | Elimina un jugador de tu protección           | viciontprotections.user.del   |
-| `/addowner <jugador>`  | Añade un propietario a tu protección          | viciontprotections.user.owner |
-| `/delowner <jugador>`  | Elimina un propietario de tu protección       | viciontprotections.user.owner |
-| `/ownerlist`           | Lista todos los propietarios de tu protección | viciontprotections.user.owner |
-| `/memberlist`          | Lista todos los miembros de tu protección     | viciontprotections.user.owner |
-| `/prlist`              | Lista todas las protecciones                  | Ninguno                       |
+</div>
 
-El comando /addowner y /delowner solo pueden ser utilizados por el propietario principal de la protección.
-Al ser propietaria normal de la protection, el jugador puede añadir o eliminar miembros de tu protección.
+## ۞ Qué incluye
 
-### Comandos de Administrador
-| Comando                                       | Descripción                                                | Permiso                           |
-|-----------------------------------------------|------------------------------------------------------------|-----------------------------------|
-| `/givepr <tipo>`                              | Da un bloque de protección                                 | viciontprotections.admin.give     |
-| `/newnamepr <nombre>`                         | Establece nombre para una protección sin nombre            | viciontprotections.admin.name     |
-| `/modnamepr <protección> <nuevo_nombre>`      | Modifica el nombre de una protección                       | viciontprotections.admin.name     |
-| `/modmember <protección> <add/del> <jugador>` | Modifica miembros de la protección (Añadir o eliminar)     | viciontprotections.admin.mod      |
-| `/modowner <protección> <add/del> <jugador>`  | Modifica propietarios de la protección (Añadir o eliminar) | viciontprotections.admin.owner    |
-| `/removepr <protección>`                      | Elimina una protección                                     | viciontprotections.admin.remove   |
-| `/prvillager [x] [y] [z]`                     | Genera un comerciante de protecciones                      | viciontprotections.admin.villager |
-| `/vpreload`                                   | Recarga la configuración del plugin                        | viciontprotections.admin.reload   |
+- Protecciones con nombre, creador, propietarios añadidos y miembros.
+- Seguridad de WorldGuard: construcción, contenedores, interacciones y prevención de solapamientos.
+- Bloques protectores de cualquier material colocable y dimensiones configurables, también rectangulares y con altura limitada.
+- Diálogos desde **1.21.6**, con guía integrada; comandos y mensajes pulsables en versiones anteriores.
+- Aviso de entrada por chat y action bar, y límites personales con partículas moradas y rosas pastel.
+- SQLite incluido o MySQL con creación automática de tablas.
+- API pública con servicio Bukkit, eventos y operaciones asíncronas de persistencia.
 
-## Tipos de Protección Base
-- Pequeña (32x32)
-- Mediana (64x64)
-- Grande (128x128)
+## ۞ Instalación
 
-## Características de las Protecciones
-- Límites visuales (bloques de lana amarilla durante 1 minuto)
-- Sistema de múltiples propietarios
-- Gestión de miembros
-- Nombres personalizados
-- Protección anti-solapamiento
-- Protección de bloques
-- Protección de interacciones
+1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
+2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
+3. Coloca `ViciontProtections-2.0.0.jar` en `plugins/` y reinicia el servidor.
+4. Configura permisos, `plugins/ViciontProtections/config.yml` y `messages.yml`.
 
-## Sistema de Comercio
-El plugin incluye un aldeano comerciante personalizado que vende bloques de protección.
-Los trades son configurables a tus gustos, puedes añadir 1 como 2 items por trade.
+La implementación utiliza la API de Spigot y comandos vanilla para los diálogos. Las comprobaciones de ejecución se realizan en Paper; consulta [VALIDATION.md](docs/VALIDATION.md) para distinguir versiones verificadas y alcance.
 
-Ejemplos:
+No uses `/reload` ni recargadores de plugins. `/pr recargar` recarga mensajes y ajustes; cambiar la conexión SQL necesita reiniciar.
 
-```yaml
-  large:
-    name: "Protección Premium 320x320"
-    size: 320
-    cost:
-      - IRON_NUGGET:2
-      - NETHERITE_BLOCK:2
+## ۞ Guía para jugadores
+
+### Tu primera protección
+
+1. Consigue un bloque protector mediante la administración, una tienda o un plugin integrado.
+2. Colócalo en una zona libre. Se crea una protección con nombre automático.
+3. Dentro de ella, usa `/pr nombre Mi casa` para personalizarla.
+4. Usa `/pr miembro añadir Alex` para dar acceso a un amigo.
+5. Consulta `/pr lista` y `/pr limites` para localizar tus protecciones y ver su borde.
+
+Las nuevas dimensiones son **exactas**: un bloque de 32 × 32 protege 32 bloques en cada eje horizontal. `todo` cubre toda la altura del mundo. El bloque protector queda centrado; con dimensiones pares, el lado negativo tiene un bloque más que el positivo.
+
+Solo el creador o un administrador puede romper el bloque protector. Al romperlo en supervivencia se elimina la protección y se devuelve el bloque. **Eliminarla por comando o API no devuelve un objeto.** Las protecciones creadas desde una selección de WorldEdit no necesitan un bloque físico.
+
+### Menú y guía
+
+- `/proteccion`, `/protections` y `/pr` abren el menú en servidor y cliente **1.21.6 o posterior**.
+- Fuera de una protección se abre la guía. Dentro, el botón **Guía de protecciones** está al final del diálogo.
+- Los botones disponibles respetan tu rol y tus permisos, también al pulsarlos.
+- `/pr guia` está disponible para todos. En versiones anteriores muestra la guía por chat y los enlaces configurados de Spigot y Modrinth.
+- Con ViaVersion instalado se comprueba también la versión del cliente. Puedes desactivar los diálogos con `dialogs.enabled: false`.
+
+La visualización de límites es personal y temporal: no muestra partículas a todos los jugadores y se desactiva al desconectarte o perder acceso.
+
+## ۞ Comandos
+
+Alias principales: `/proteccion`, `/pr`, `/protections`, `/vp` y `/proteccionv`.
+
+| Comando | Función |
+| --- | --- |
+| `/pr` | Menú o guía según tu ubicación y versión |
+| `/pr guia` | Guía y enlaces de las páginas del plugin |
+| `/pr ayuda` | Resumen de comandos |
+| `/pr lista [página]` | Lista paginada de tus protecciones; los administradores pueden ver todas |
+| `/pr info` | Nombre, ID, dimensiones, creador, propietarios y miembros |
+| `/pr nombre <nombre>` | Cambiar el nombre, hasta 48 caracteres |
+| `/pr miembro <añadir\|quitar> <jugador\|UUID>` | Gestionar miembros |
+| `/pr propietario <añadir\|quitar> <jugador\|UUID>` | Gestionar propietarios añadidos |
+| `/pr limites` | Mostrar u ocultar tus partículas de borde |
+| `/pr eliminar` | Pedir confirmación para eliminar la protección |
+| `/pr dar <jugador> <bloque> <ancho> [profundidad] [altura\|todo] [cantidad]` | Entregar bloques protectores |
+| `/pr seleccion <creador> <nombre>` | Proteger tu selección cúbica de WorldEdit |
+| `/pr bandera <bandera> <permitir\|denegar\|restablecer>` | Configurar una bandera de estado de WorldGuard |
+| `/pr transferir <jugador\|UUID>` | Cambiar el creador; el anterior queda como propietario añadido |
+| `/pr recargar` | Recargar ajustes y mensajes |
+
+Para gestionar una protección a distancia, antepón `@ID`: `/pr @a1b2c3d4 miembro añadir Alex`. Puedes usar el UUID completo o el ID corto mostrado en la lista. No concede permisos adicionales.
+
+Los destinatarios por nombre deben estar conectados o haber entrado al servidor; también puedes utilizar su UUID. `/pr dar` requiere que el destinatario esté conectado.
+
+### Ejemplos de administración
+
+```text
+/pr dar Alex DIAMOND_BLOCK 32
+/pr dar Alex AMETHYST_BLOCK 45 21 todo 2
+/pr dar Alex GOLD_BLOCK 20 12 15 1
+/pr seleccion Alex Mercado central
+/pr bandera pvp denegar
 ```
 
-```yaml
-  small:
-    name: "Protección Básica"
-    size: 32
-    cost:
-      - DIAMOND:1
+Por defecto el límite de dimensiones de los bloques es 4096, configurable con `protections.max-block-size`. El límite de creaciones por jugador es 20; `admin.manage` lo omite. Una región nueva no puede atravesar otra región de WorldGuard ni el borde del mundo.
+
+`/pr bandera` sin argumentos lista las banderas admitidas. Se excluyen `build` y `passthrough` para conservar el control por miembros. Los mensajes de integración de ViciontProtections tienen su propia paleta; **`/rg` y `//set` conservan los mensajes de sus respectivos plugins**. Gestiona las banderas de estas protecciones con `/pr bandera`: la sincronización reconstruye las regiones a partir de los datos del plugin.
+
+Se mantienen los comandos antiguos: `/givepr`, `/addnamepr`, `/newnamepr`, `/addmember`, `/delmember`, `/addowner`, `/delowner`, `/ownerlist`, `/memberlist`, `/prlist`, `/modnamepr`, `/modmember`, `/modowner`, `/removepr` y `/vpreload`. `/givepr small|medium|large` sigue funcionando. Los comandos `mod*` reciben primero el nombre sin espacios o ID de la protección; miembros/propietarios usan después `añadir|quitar <jugador>`. `/removepr <ID> confirmar` elimina después de confirmarlo.
+
+El sistema de intercambios de aldeanos y `/prvillager` se han retirado.
+
+## ۞ Permisos y roles
+
+**Todos los permisos de gestión tienen `default: op`.** La guía y la ayuda son públicas. Para permitir el uso normal a jugadores, concede el grupo de permisos de usuario; por ejemplo, con LuckPerms:
+
+```text
+/lp group default permission set viciontprotections.user.* true
 ```
 
-## Configuración
-Todas las configuraciones se pueden personalizar en `config.yml`:
-- Costos de las protecciones
-- Mensajes
-- Configuración del aldeano
-- Configuración de la base de datos
-- Tamaño de las protecciones
-- Nombre del bloque de protección
+Los permisos Bukkit habilitan la función; el rol dentro de la protección determina sobre qué protección puedes usarla.
 
-_(**NOTA:** Cambiar de nombre un bloque de protección podría afectar a los bloques de protecciones que ya existen, por lo que se recomienda 
-cambiar el nombre del bloque de protección al inicio de la creación del plugin o mantener el nombre por defecto)_
+| Acción | Creador | Propietario añadido | Miembro |
+| --- | :---: | :---: | :---: |
+| Construir y usar contenedores | ✓ | ✓ | ✓ |
+| Consultar información | ✓ | ✓ | ✓ |
+| Añadir/quitar miembros | ✓ | ✓ | — |
+| Mostrar/ocultar límites | ✓ | ✓ | — |
+| Añadir/quitar propietarios | ✓ | — | — |
+| Cambiar nombre o eliminar | ✓ | — | — |
+| Cambiar creador o banderas | Solo administración | Solo administración | — |
 
-## Permisos
-### Permisos de Usuario
+| Permiso | Función |
+| --- | --- |
+| `viciontprotections.user.*` | Todas las funciones de usuario, respetando el rol |
+| `viciontprotections.user.create` | Colocar un bloque protector |
+| `viciontprotections.user.list` | Consultar listas |
+| `viciontprotections.user.info` | Consultar información |
+| `viciontprotections.user.members` | Gestionar miembros |
+| `viciontprotections.user.owners` | Gestionar propietarios añadidos |
+| `viciontprotections.user.name` | Cambiar nombres |
+| `viciontprotections.user.delete` | Eliminar protecciones propias |
+| `viciontprotections.user.borders` | Activar/desactivar límites |
+| `viciontprotections.admin.*` | Todas las funciones administrativas |
+| `viciontprotections.admin.manage` | Gestionar cualquier protección y omitir el límite por jugador |
+| `viciontprotections.admin.give` | Entregar bloques |
+| `viciontprotections.admin.selection` | Crear desde WorldEdit |
+| `viciontprotections.admin.flags` | Editar banderas |
+| `viciontprotections.admin.transfer` | Cambiar creador |
+| `viciontprotections.admin.list` | Ver todas las protecciones en la lista |
+| `viciontprotections.admin.reload` | Recargar configuración |
+
+`admin.manage` no concede automáticamente `dar`, `seleccion`, `recargar` o acceso a listas. Para administración completa usa `admin.*` junto con `user.*`, o conserva OP.
+
+## ۞ Mensajes y enlaces
+
+Los mensajes predeterminados están en español, con el símbolo **۞** y colores hex `&#RRGGBB`. `messages.yml` permite cambiar los prefijos públicos, administrativos y de integración, los avisos de entrada y la guía. Los avisos y formularios adicionales usan la misma paleta desde el código.
+
+En `config.yml`, completa los enlaces cuando publiques las páginas de guía:
+
 ```yaml
-viciontprotections.user.*:
-  description: Acceso a todos los comandos de usuario
-  children:
-    viciontprotections.user.name: true
-    viciontprotections.user.add: true
-    viciontprotections.user.del: true
-    viciontprotections.user.owner: true
+guide:
+  spigot: ''
+  modrinth: ''
 ```
 
-### Permisos de Administrador
+Usa direcciones `https://`. Un campo vacío oculta ese enlace y mantiene visible la guía integrada. Después ejecuta `/pr recargar`.
+
+## ۞ Almacenamiento y actualización
+
+SQLite funciona sin configuración adicional. Para MySQL, crea una base de datos y un usuario con permisos sobre ella; el plugin crea sus tablas `vp_meta`, `vp_protections` y `vp_roles`.
+
 ```yaml
-viciontprotections.admin.*:
-  description: Acceso a todos los comandos de administrador
-  children:
-    viciontprotections.admin.give: true
-    viciontprotections.admin.mod: true
-    viciontprotections.admin.owner: true
-    viciontprotections.admin.remove: true
-    viciontprotections.admin.name: true
-    viciontprotections.admin.villager: true
+database:
+  type: mysql
+  filename: protections.db
+  table-prefix: vp_
+  mysql:
+    host: localhost
+    port: 3306
+    database: viciontprotections
+    username: viciont
+    password: 'TU_CONTRASEÑA'
+    ssl-mode: PREFERRED
 ```
 
-## Instalación
-1. Descarga el archivo JAR del plugin: _https://github.com/CrissyjuanxD/ViciontProtections/releases_
-2. Colócalo en la carpeta `plugins` de tu servidor
-3. Reinicia el servidor
-4. Configura el plugin en `config.yml` si es necesario
+Las escrituras son transaccionales y se ejecutan fuera del hilo principal. Las consultas durante el movimiento utilizan la caché y el índice de WorldGuard. Si una escritura falla, el plugin intenta restaurar el estado anterior y avisa al usuario.
 
-## Versiones Compatibles
-Compatible con las version de Minecraft:
-- 1.21.x
+### Desde 1.x
 
-Versiones que tengo pensada que sean compatibles:
-- 1.20.x
-- 1.19.x
+1. Detén el servidor y guarda una copia de las carpetas de ViciontProtections y WorldGuard.
+2. Instala WorldEdit/WorldGuard compatibles y reemplaza el JAR del plugin.
+3. Arranca y revisa la consola. El importador conserva las tablas antiguas; con SQLite también crea `protections-pre-2.0.db` una sola vez.
+4. Comprueba tus regiones y concede los nuevos permisos de usuario a tus grupos.
 
-## Base de Datos
-El plugin utiliza SQLite para el almacenamiento de datos, lo que facilita su configuración sin necesidad de configuración adicional.
+La migración conserva creador, propietarios, miembros y **los límites inclusivos originales**: una protección antigua configurada como 32 abarcaba 33 bloques y seguirá abarcándolos. Los bloques ya entregados con los tres CustomModelData antiguos siguen siendo reconocidos. Las protecciones sin nombre reciben uno automáticamente.
 
-## Soporte
-Como es uno de mis primeros plugins en hacer, tampoco es tan profesional y soy relativamente nuevo en la programación, pero creo que quedo bastante decente.
+Si configuras MySQL al actualizar desde 1.x y conservas el SQLite antiguo en la carpeta del plugin, se importa a las nuevas tablas. La migración es idempotente. Si faltan dueños principales o hay datos inválidos, el inicio se detiene para que puedas corregirlos; no se borra la información antigua.
 
-Creo que este plugin puede llegar ser muy util en ciertos servidores que no se quieren comerse la cabeza con los permisos y que solo funcione 
-para jugadores y operadores.
+**Cambiar SQLite por MySQL después de usar 2.0 requiere trasladar las tablas nuevas antes de arrancar con la nueva conexión.** El importador automático solo cubre el formato 1.x. Cada servidor debe usar su propia base o prefijo: no hay sincronización en vivo entre varios servidores. Conserva los nombres de los mundos al mover sus datos.
 
-Si tienes alguna duda o sugerencia, no dudes en abrir un issue en el repositorio.
+## ۞ Para desarrolladores
 
+Consulta [la documentación de la API](docs/API.md): crear regiones sin bloques, entregar objetos para tiendas, consultar acceso, gestionar miembros/propietarios, banderas y eventos cancelables.
 
-## Licencia
-Este proyecto está licenciado bajo la Licencia MIT - consulta el archivo LICENSE para más detalles.
+Compila con JDK 21 o posterior y Maven:
+
+```bash
+mvn clean verify
+```
+
+El JAR de `target/ViciontProtections-2.0.0.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
+
+## ۞ Créditos y licencia
+
+Creado por **CrissyjuanxD**. Integración mediante las API públicas de [WorldGuard](https://enginehub.org/worldguard) y [WorldEdit](https://enginehub.org/worldedit). [ProtectionStones](https://github.com/espidev/ProtectionStones) se consultó como referencia de integración y permisos; esta implementación no incorpora su código.
+
+Distribuido bajo la [licencia MIT](LICENSE).

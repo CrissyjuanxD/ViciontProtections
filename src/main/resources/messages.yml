@@ -1,0 +1,17 @@
+prefix:
+  public: '&#CDA0FF۞ &#E9C8FF'
+  admin: '&#AE7AE8۞ &#D5B0FFAdministración &#E9CCFF► '
+  worldguard: '&#9E6ADA۞ &#CBA4FFWorldGuard &#E1C7FF► '
+  worldedit: '&#D78CC2۞ &#F1BBDDWorldEdit &#F5D4EC► '
+entered: '&#E4C5FFHaz entrado a la protección &#F3BFE1%name% &#E4C5FFde &#D9AEFF%owner%&#E4C5FF.'
+entered-actionbar: '&#CFA2FF۞ &#E7C9FFHaz entrado a la protección &#F3BFE1%name%'
+left: '&#E1C1FFHas salido de la protección &#F1BBDD%name%&#E1C1FF.'
+guide:
+  - '&#D5A7FF1. &#E9CFFFConsigue un bloque protector en una tienda o con un administrador.'
+  - '&#D5A7FF2. &#E9CFFFColócalo en terreno libre. Su descripción indica el tamaño exacto.'
+  - '&#D5A7FF3. &#E9CFFFUsa /pr nombre <nombre> para personalizar tu protección.'
+  - '&#D5A7FF4. &#E9CFFF/pr miembro añadir <jugador> permite construir y usar tus objetos.'
+  - '&#D5A7FF5. &#E9CFFF/pr propietario añadir <jugador> permite administrar miembros. Solo el creador gestiona propietarios.'
+  - '&#D5A7FF6. &#E9CFFF/pr limites muestra u oculta los bordes para ti; /pr lista muestra tus protecciones.'
+  - '&#D5A7FF7. &#E9CFFFEl creador puede retirar el bloque. /pr eliminar pide confirmación y elimina la protección.'
+  - '&#F1BBDDDesde 1.21.6, /proteccion abre los diálogos. En otras versiones puedes usar todos los comandos.'
