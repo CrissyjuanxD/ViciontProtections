@@ -85,30 +85,35 @@ public class DatabaseManager {
             plugin.getLogger().log(Level.SEVERE, "Failed to close database connection:", e);
         }
     }
-    
-    public int createProtection(Location location, int size) {
-        String sql = "INSERT INTO protections (world, x, y, z, size) VALUES (?, ?, ?, ?, ?)";
-        
-        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+    public int createProtection(Location location, int size, String name) {
+        String sql = "INSERT INTO protections (world, x, y, z, size, name) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (java.sql.PreparedStatement statement = connection.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, location.getWorld().getName());
             statement.setInt(2, location.getBlockX());
             statement.setInt(3, location.getBlockY());
             statement.setInt(4, location.getBlockZ());
             statement.setInt(5, size);
-            
+
+            if (name == null) {
+                statement.setNull(6, java.sql.Types.VARCHAR);
+            } else {
+                statement.setString(6, name);
+            }
+
             int affectedRows = statement.executeUpdate();
-            
+
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                try (java.sql.ResultSet generatedKeys = statement.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         return generatedKeys.getInt(1);
                     }
                 }
             }
-        } catch (SQLException e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to create protection:", e);
+        } catch (java.sql.SQLException e) {
+            plugin.getLogger().log(java.util.logging.Level.SEVERE, "Failed to create protection:", e);
         }
-        
         return -1;
     }
     

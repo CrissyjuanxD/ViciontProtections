@@ -3,7 +3,9 @@ package com.viciont.viciontprotections.models;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -120,45 +122,50 @@ public class Protection {
         return location.getBlockX() >= minX && location.getBlockX() <= maxX &&
                location.getBlockZ() >= minZ && location.getBlockZ() <= maxZ;
     }
-    
+
     public void visualizeBoundaries() {
         int halfSize = size / 2;
         int minX = center.getBlockX() - halfSize;
         int maxX = center.getBlockX() + halfSize;
         int minZ = center.getBlockZ() - halfSize;
         int maxZ = center.getBlockZ() + halfSize;
-        int y = center.getBlockY();
-        
-        // Create temporary visual boundaries with yellow wool
-        for (int x = minX; x <= maxX; x++) {
-            showTemporaryBlock(new Location(center.getWorld(), x, y, minZ));
-            showTemporaryBlock(new Location(center.getWorld(), x, y, maxZ));
-        }
-        
-        for (int z = minZ + 1; z < maxZ; z++) {
-            showTemporaryBlock(new Location(center.getWorld(), minX, y, z));
-            showTemporaryBlock(new Location(center.getWorld(), maxX, y, z));
-        }
-    }
-    
-    private void showTemporaryBlock(Location location) {
-        // Find the highest non-air block at this XZ coordinate
-        int highestY = location.getWorld().getHighestBlockYAt(location);
-        Location highestLocation = new Location(location.getWorld(), location.getX(), highestY + 1, location.getZ());
-        
-        // Only show the block if there's air
-        if (highestLocation.getBlock().getType() == Material.AIR) {
-            for (Player player : Bukkit.getOnlinePlayers()) {
-                player.sendBlockChange(highestLocation, Material.YELLOW_WOOL.createBlockData());
-            }
-            
-            // Schedule removal after 1 minute (1200 ticks)
-            Bukkit.getScheduler().runTaskLater(Bukkit.getPluginManager().getPlugin("ViciontProtections"), () -> {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    player.sendBlockChange(highestLocation, highestLocation.getBlock().getBlockData());
+
+        org.bukkit.plugin.java.JavaPlugin plugin = org.bukkit.plugin.java.JavaPlugin.getPlugin(com.viciont.viciontprotections.ViciontProtections.class);
+        Particle.DustOptions dustOptions = new Particle.DustOptions(org.bukkit.Color.YELLOW, 1.5F);
+
+        new BukkitRunnable() {
+            int ticks = 0;
+            @Override
+            public void run() {
+                if (ticks >= 60) { // Dura 30 segundos (60 ejecuciones * 10 ticks)
+                    this.cancel();
+                    return;
                 }
-            }, 1200L);
-        }
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (!player.getWorld().equals(center.getWorld())) continue;
+                    // Solo mostramos partículas a los que estén cerca para evitar lag
+                    if (player.getLocation().distanceSquared(center) > 15000) continue;
+
+                    // Dibujar paredes de partículas cada 3 bloques
+                    for (int x = minX; x <= maxX; x += 3) {
+                        spawnParticleLine(player, x, minZ, dustOptions);
+                        spawnParticleLine(player, x, maxZ, dustOptions);
+                    }
+                    for (int z = minZ; z <= maxZ; z += 3) {
+                        spawnParticleLine(player, minX, z, dustOptions);
+                        spawnParticleLine(player, maxX, z, dustOptions);
+                    }
+                }
+                ticks++;
+            }
+
+            private void spawnParticleLine(Player p, int x, int z, Particle.DustOptions options) {
+                int highestY = p.getWorld().getHighestBlockYAt(x, z);
+                // Dibuja una línea vertical de 3 partículas
+                p.spawnParticle(Particle.DUST, x + 0.5, highestY + 1.5, z + 0.5, 4, 0, 1, 0, options);
+            }
+
+        }.runTaskTimer(plugin, 0L, 10L);
     }
     
     public String getPrimaryOwnerName() {
