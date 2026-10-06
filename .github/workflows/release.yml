@@ -1,0 +1,34 @@
+# Cuando publicas una release en GitHub con tu cuenta, compila el plugin de esa etiqueta, ejecuta
+# las pruebas y adjunta el JAR. Si dejas la descripción vacía, añade las notas de CHANGELOG.md.
+name: Adjuntar JAR a la release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Compilar y probar
+        run: mvn -B clean verify
+      - name: Adjuntar JAR y notas
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
+          gh release upload "$TAG" "target/ViciontProtections-$VERSION.jar" --clobber --repo "$GITHUB_REPOSITORY"
+          if [ -z "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body)" ]; then
+            awk -v v="## $VERSION" '$0 == v {found=1; next} found && /^## / {exit} found' CHANGELOG.md > notas.md
+            gh release edit "$TAG" --notes-file notas.md --repo "$GITHUB_REPOSITORY"
+          fi

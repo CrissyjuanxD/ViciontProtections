@@ -1,42 +1,42 @@
-# Validación de ViciontProtections 2.0.0
+# Validación de ViciontProtections 2.0.2
 
-La compatibilidad objetivo es Spigot/Paper 1.21–26.2. El código se compila contra Spigot 1.21 con bytecode Java 21 y no enlaza clases NMS ni API exclusivas de Paper.
+Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contra la API de Spigot 1.21 con bytecode Java 21 y no usa clases NMS. La API de diálogos de Spigot 1.21.6+ se carga solo cuando el servidor la incluye.
 
 ## Pruebas automatizadas
 
-`mvn clean verify`: **11 pruebas**, sin fallos ni errores.
+`mvn clean verify`: **17 pruebas**, sin fallos.
 
 - Dimensiones exactas, bordes y límites inválidos.
-- Jerarquía de creador/propietario/miembro, permisos explícitos y restricciones de administración.
-- Instantáneas inmutables y detección del cambio de versión para diálogos, incluido `26.2.build.129-stable`.
-- CRUD SQLite, roles, banderas y registros de mundos ausentes.
-- Migración 1.x idempotente, conservación de las tablas antiguas y de los límites originales.
-- Rechazo de prefijos SQL inválidos.
+- Jerarquía de creador/propietario/miembro y permisos explícitos.
+- Instantáneas inmutables y detección de versiones con diálogos (incluido `26.2.build.129-stable`).
+- CRUD SQLite, roles, banderas, prefijos SQL inválidos y migración 1.x idempotente.
+- Copia SQLite → base vacía sin repetir la importación de 1.x.
+- Paleta, degradados y prefijo `[Viciont Protections]`.
+- Conversión de diálogos a la API de Spigot (formularios, opciones, confirmación y botones sin acción).
 
-## Servidores internos
+## Servidores reales
 
-| Servidor | Java | WorldEdit | WorldGuard |
-| --- | --- | --- | --- |
-| Paper 1.21, build 130 | 21 | 7.3.9 | 7.0.12 |
-| Paper 1.21.6, build 48 | 21 | 7.3.16 | 7.0.14 |
-| Paper 26.2, build 129 | 25 | 7.4.5 | 7.0.19 |
+Cada servidor se arrancó con WorldEdit y WorldGuard y se recorrieron los comandos con clientes automáticos (mineflayer) conectados como jugadores, comprobando los mensajes de chat, la action bar, el contenido de cada diálogo recibido y los paquetes de partículas.
 
-Un plugin auxiliar, excluido del JAR distribuido, comprueba en los servidores:
+| Servidor | Java | WorldEdit | WorldGuard | Diálogos |
+| --- | --- | --- | --- | --- |
+| Paper 1.21.1 | 21 | 7.3.9 | 7.0.12 | No (chat) |
+| Paper 1.21.8 | 21 | 7.3.19 | 7.0.14 | Paper |
+| Spigot 1.21.8 (BuildTools) | 21 | 7.3.19 | 7.0.14 | Spigot |
+| Paper 26.2 | 25 | 7.4.5 | 7.0.19 | Paper (cliente 26.1 vía ViaVersion/ViaBackwards) |
 
-- Arranque y registro del servicio API.
-- Creación de bloques personalizados y recuperación de sus dimensiones desde PDC.
-- Creación y consulta de regiones, rechazo de solapamientos y denegación real de construcción mediante WorldGuard.
-- Escrituras encadenadas de miembros, propietarios, nombres y banderas.
-- Protección del creador frente a su eliminación como propietario añadido.
-- Lectura de datos persistidos tras reiniciar.
-- En 1.21.6 y 26.2: validación de guía, menús, información, listas, confirmación y formularios mediante el codec nativo de diálogos de Minecraft.
+Comprobado:
 
-SQLite se comprueba en las tres versiones. El backend MySQL se comprueba con **MySQL Connector/J y MariaDB 11.4.13**, incluyendo creación de tablas, operaciones y recuperación al reiniciar en Paper 26.2. Esto no constituye una ejecución independiente sobre Oracle MySQL.
+- Guía, menú, información, listas (propias y `todas`), confirmación de borrado, panel de administración y todos los formularios.
+- Menús por rol con jugadores sin OP y permisos de LuckPerms: creador, propietario añadido (solo miembros y límites) y miembro.
+- Añadir/quitar miembros y propietarios, nombres válidos e inválidos, límites, banderas, transferir, entregar bloques, selección de WorldEdit, colocar y romper bloques protectores.
+- WorldGuard deniega construir a un desconocido y lo permite tras añadirlo como miembro.
+- Sin avisos `[Server: Displayed dialog ...]` a los OP ni registros de diálogos en consola.
+- Comandos antiguos (`/prlist`, `/ownerlist`, `/memberlist`, `/addmember`, `/delowner`...), autocompletado y uso desde consola.
+- Actualización real desde 1.1.1: protecciones creadas con el JAR 1.1.1, importadas al arrancar 2.0.2, bloques antiguos `small`/`medium` reconocidos y limpieza del `config.yml` antiguo.
+- MariaDB 10.11 con el conector MySQL incluido: creación de tablas `utf8mb4`, copia automática desde SQLite (también con una base `latin1`), cambios y persistencia tras reiniciar.
+- API: servicio, bloques de tienda, regiones sin bloque, mutaciones encadenadas, veto con `ProtectionChangingEvent` y eventos de cambio y entrada.
 
-Los servidores están limitados a localhost. Las peticiones externas de claves públicas de Mojang fallan en este entorno de red; se distinguen de los errores del plugin y no validan la autenticación online.
+## Pendiente de revisión manual
 
-## Alcance pendiente de validación manual
-
-No se han conectado clientes reales: quedan por revisar el aspecto de los diálogos, los clics, las partículas y la colocación/rotura durante el juego con los otros plugins del servidor. Spigot puro y cada versión intermedia no se han arrancado individualmente. Los diálogos se validan como datos nativos, no mediante capturas de pantalla del cliente.
-
-Para actualizar un servidor existente, conserva primero una copia de los datos y utiliza las versiones de WorldEdit/WorldGuard adecuadas. Las últimas versiones de esas dependencias pueden necesitar Java 25 aunque el servidor antiguo admita Java 21.
+Los clientes automáticos no dibujan la interfaz: falta ver con un cliente real el aspecto de los diálogos y de las partículas. No se probó Oracle MySQL ni cada versión intermedia entre 1.21.1 y 26.2.

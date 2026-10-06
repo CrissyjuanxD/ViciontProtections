@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.viciont</groupId><artifactId>ViciontProtections</artifactId><version>2.0.0</version>
+  <groupId>com.viciont</groupId><artifactId>ViciontProtections</artifactId><version>2.0.2</version>
   <name>ViciontProtections</name><description>Protecciones con WorldGuard, nombres personalizados y API para Spigot y Paper.</description>
   <properties><maven.compiler.release>21</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
   <repositories>
@@ -10,6 +10,8 @@
   </repositories>
   <dependencies>
     <dependency><groupId>org.spigotmc</groupId><artifactId>spigot-api</artifactId><version>1.21-R0.1-SNAPSHOT</version><scope>provided</scope></dependency>
+    <!-- API de diálogos de Spigot 1.21.6+; solo se usa en esos servidores (ui/SpigotDialogs). -->
+    <dependency><groupId>net.md-5</groupId><artifactId>bungeecord-dialog</artifactId><version>1.21-R0.3</version><scope>provided</scope><exclusions><exclusion><groupId>*</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
     <dependency><groupId>com.sk89q.worldguard</groupId><artifactId>worldguard-bukkit</artifactId><version>7.0.10</version><scope>provided</scope><exclusions><exclusion><groupId>org.bukkit</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
     <dependency><groupId>com.sk89q.worldedit</groupId><artifactId>worldedit-bukkit</artifactId><version>7.3.0</version><scope>provided</scope><exclusions><exclusion><groupId>org.bukkit</groupId><artifactId>*</artifactId></exclusion></exclusions></dependency>
     <dependency><groupId>com.zaxxer</groupId><artifactId>HikariCP</artifactId><version>7.1.0</version></dependency>

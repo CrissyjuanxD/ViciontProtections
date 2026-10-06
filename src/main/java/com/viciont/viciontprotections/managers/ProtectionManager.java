@@ -48,6 +48,12 @@ public final class ProtectionManager implements ViciontProtectionsApi {
     guard.reconcile(world, protections.values());
   }
 
+  /** Vuelve a aplicar todas las protecciones en WorldGuard, por ejemplo tras /pr recargar. */
+  public void resync() {
+    requireMain();
+    for (World world : Bukkit.getWorlds()) guard.reconcile(world, protections.values());
+  }
+
   public ItemStack createProtectionBlock(ProtectionBlock block, int amount) {
     requireMain();
     return items.create(block, amount);
@@ -153,7 +159,7 @@ public final class ProtectionManager implements ViciontProtectionsApi {
             throw new ProtectionException("El bloque protector debe estar dentro de la región.");
           String name =
               request.name() == null || request.name().isBlank()
-                  ? "Protección #" + id.toString().substring(0, 8)
+                  ? defaultName(request.primaryOwner(), id)
                   : validName(request.name());
           Protection protection =
               new Protection(
@@ -169,6 +175,19 @@ public final class ProtectionManager implements ViciontProtectionsApi {
                   System.currentTimeMillis());
           return persist(null, protection);
         });
+  }
+
+  /** «Protección de Alex», «Protección de Alex 2»... o el ID si el nombre no es válido. */
+  private String defaultName(UUID owner, UUID id) {
+    String player = Bukkit.getOfflinePlayer(owner).getName();
+    if (player == null || !player.matches("[\\p{L}\\p{N}._#-]{1,30}"))
+      return "Protección #" + id.toString().substring(0, 8);
+    Set<String> used = new HashSet<>();
+    for (Protection p : protections.values())
+      if (p.primaryOwner().equals(owner)) used.add(p.name().toLowerCase(Locale.ROOT));
+    String base = "Protección de " + player, name = base;
+    for (int n = 2; used.contains(name.toLowerCase(Locale.ROOT)); n++) name = base + " " + n;
+    return name;
   }
 
   public CompletableFuture<Protection> renameProtection(UUID id, String name) {

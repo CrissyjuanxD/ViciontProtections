@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
  */
 public final class WorldGuardBridge {
   private static StringFlag managed;
+  private String denyMessage = "&#B07CFF۞ &#FF8FB8No tienes permiso para hacer eso en esta protección.";
 
   public static void registerFlag() {
     var registry = WorldGuard.getInstance().getFlagRegistry();
@@ -33,13 +34,26 @@ public final class WorldGuardBridge {
     }
   }
 
+  /** Mensaje que WorldGuard muestra al denegar una acción; admite los colores de messages.yml. */
+  public void setDenyMessage(String message) {
+    if (message != null && !message.isBlank()) denyMessage = message;
+  }
+
   public RegionManager manager(World world) {
     if (world == null) throw new ProtectionException("El mundo de esa protección no está cargado.");
-    RegionManager manager =
-        WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
+    RegionManager manager = regions(world);
     if (manager == null)
       throw new ProtectionException("WorldGuard no tiene habilitadas las regiones en este mundo.");
     return manager;
+  }
+
+  /** null si WorldGuard tiene las regiones desactivadas en ese mundo. */
+  private static RegionManager regions(World world) {
+    if (managed == null)
+      throw new IllegalStateException(
+          "La bandera viciont-protection no está registrada: reinicia el servidor en lugar de"
+              + " recargar el plugin.");
+    return WorldGuard.getInstance().getPlatform().getRegionContainer().get(BukkitAdapter.adapt(world));
   }
 
   private ProtectedCuboidRegion region(String id, Bounds b) {
@@ -112,9 +126,7 @@ public final class WorldGuardBridge {
             Flags.FIRE_SPREAD,
             Flags.LAVA_FIRE,
             Flags.ENDER_BUILD)) region.setFlag(flag, StateFlag.State.DENY);
-    region.setFlag(
-        Flags.DENY_MESSAGE,
-        color("&#B88CFF۞ &#E8C9FFNo tienes permiso para hacer eso en esta protección."));
+    region.setFlag(Flags.DENY_MESSAGE, com.viciont.viciontprotections.ui.Messages.color(denyMessage));
     for (var entry : protection.flags().entrySet())
       region.setFlag(stateFlag(entry.getKey()), StateFlag.State.valueOf(entry.getValue()));
     manager.addRegion(region);
@@ -123,7 +135,8 @@ public final class WorldGuardBridge {
   public void remove(Protection protection) {
     World world = Bukkit.getWorld(protection.worldName());
     if (world == null) return;
-    RegionManager manager = manager(world);
+    RegionManager manager = regions(world);
+    if (manager == null) return;
     ProtectedRegion region = manager.getRegion(protection.regionId());
     if (region != null && protection.id().toString().equals(region.getFlag(managed)))
       manager.removeRegion(protection.regionId());
@@ -131,9 +144,11 @@ public final class WorldGuardBridge {
 
   public Set<UUID> at(Location location) {
     if (location.getWorld() == null) return Set.of();
+    RegionManager manager = regions(location.getWorld());
+    if (manager == null) return Set.of();
     Set<UUID> result = new HashSet<>();
     for (ProtectedRegion region :
-        manager(location.getWorld())
+        manager
             .getApplicableRegions(
                 BlockVector3.at(
                     location.getBlockX(), location.getBlockY(), location.getBlockZ()))) {
@@ -148,7 +163,19 @@ public final class WorldGuardBridge {
   }
 
   public void reconcile(World world, Collection<Protection> protections) {
-    RegionManager manager = manager(world);
+    RegionManager manager = regions(world);
+    if (manager == null) {
+      long stored = protections.stream().filter(p -> p.worldName().equals(world.getName())).count();
+      if (stored > 0)
+        Bukkit.getLogger()
+            .warning(
+                "[ViciontProtections] WorldGuard tiene las regiones desactivadas en "
+                    + world.getName()
+                    + "; sus "
+                    + stored
+                    + " protecciones no estarán activas hasta habilitarlas.");
+      return;
+    }
     Set<String> valid = new HashSet<>();
     for (Protection protection : protections)
       if (protection.worldName().equals(world.getName())) {
@@ -181,13 +208,4 @@ public final class WorldGuardBridge {
     return result;
   }
 
-  private String color(String value) {
-    var match = java.util.regex.Pattern.compile("&#([0-9a-fA-F]{6})").matcher(value);
-    StringBuilder result = new StringBuilder();
-    while (match.find())
-      match.appendReplacement(
-          result, net.md_5.bungee.api.ChatColor.of("#" + match.group(1)).toString());
-    match.appendTail(result);
-    return result.toString();
-  }
 }

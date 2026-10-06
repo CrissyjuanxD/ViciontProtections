@@ -26,14 +26,19 @@ public final class ViciontProtections extends JavaPlugin {
   public void onEnable() {
     try {
       saveDefaultConfig();
+      cleanLegacyConfig();
       getConfig().options().copyDefaults(true);
       saveConfig();
       messages = new Messages(this);
       database = DatabaseManager.open(this);
-      protections = new ProtectionManager(this, database, new WorldGuardBridge());
+      var guard = new WorldGuardBridge();
+      guard.setDenyMessage(messages.text("avisos.denegado"));
+      protections = new ProtectionManager(this, database, guard);
       boundaries = new Boundaries(this, protections);
-      var dialogs = new ProtectionDialogs(this, messages, protections);
-      var commands = new ProtectionCommand(this, protections, messages, dialogs, boundaries);
+      var dialogs = new ProtectionDialogs(this, messages, protections, boundaries);
+      var chat = new ChatViews(messages, boundaries);
+      var commands =
+          new ProtectionCommand(this, protections, messages, dialogs, chat, boundaries);
       getDescription()
           .getCommands()
           .keySet()
@@ -45,7 +50,8 @@ public final class ViciontProtections extends JavaPlugin {
               });
       getServer()
           .getPluginManager()
-          .registerEvents(new ProtectionListener(this, protections, messages, boundaries), this);
+          .registerEvents(
+              new ProtectionListener(this, protections, messages, boundaries, dialogs), this);
       getServer()
           .getServicesManager()
           .register(ViciontProtectionsApi.class, protections, this, ServicePriority.Normal);
@@ -55,7 +61,11 @@ public final class ViciontProtections extends JavaPlugin {
                   + getDescription().getVersion()
                   + " habilitado: "
                   + protections.getProtections().size()
-                  + " protecciones, seguridad WorldGuard y API disponibles.");
+                  + " protecciones, seguridad WorldGuard y API disponibles. Diálogos: "
+                  + (ProtectionDialogs.supportsVersion(getServer().getBukkitVersion())
+                      ? dialogs.mode()
+                      : "no disponibles en esta versión (se usa el chat)")
+                  + ".");
     } catch (Exception failure) {
       getLogger()
           .log(
@@ -65,6 +75,32 @@ public final class ViciontProtections extends JavaPlugin {
               failure);
       getServer().getPluginManager().disablePlugin(this);
     }
+  }
+
+  /**
+   * La 1.x guardaba sus mensajes (con el prefijo antiguo) y el aldeano en config.yml. La 2.x usa
+   * messages.yml, así que esas secciones se retiran tras guardar una copia del archivo.
+   */
+  private void cleanLegacyConfig() throws java.io.IOException {
+    var config = getConfig();
+    if (!config.isConfigurationSection("messages") && !config.isConfigurationSection("villager"))
+      return;
+    var file = new java.io.File(getDataFolder(), "config.yml").toPath();
+    var backup = file.resolveSibling("config-1.x-anterior.yml");
+    java.nio.file.Files.copy(file, backup, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+    config.set("messages", null);
+    config.set("villager", null);
+    for (String type : java.util.List.of("small", "medium", "large")) {
+      config.set("protection_types." + type + ".name", null);
+      config.set("protection_types." + type + ".cost", null);
+    }
+    saveConfig();
+    getLogger()
+        .info(
+            "config.yml de 1.x: se retiraron las secciones messages y villager (ahora los mensajes"
+                + " están en messages.yml). Copia guardada en "
+                + backup.getFileName()
+                + ".");
   }
 
   @Override

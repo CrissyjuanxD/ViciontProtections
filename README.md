@@ -8,7 +8,7 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-2.0.0-B995E8)
+![Versión](https://img.shields.io/badge/Versión-2.0.2-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
 [Guía](#-guía-para-jugadores) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
@@ -20,8 +20,9 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 - Protecciones con nombre, creador, propietarios añadidos y miembros.
 - Seguridad de WorldGuard: construcción, contenedores, interacciones y prevención de solapamientos.
 - Bloques protectores de cualquier material colocable y dimensiones configurables, también rectangulares y con altura limitada.
-- Diálogos desde **1.21.6**, con guía integrada; comandos y mensajes pulsables en versiones anteriores.
-- Aviso de entrada por chat y action bar, y límites personales con partículas moradas y rosas pastel.
+- Menú con diálogos desde **1.21.6** (Spigot y Paper), con guía integrada; menús de chat pulsables en versiones anteriores.
+- Prefijo `[Viciont Protections]` en degradado, paleta morada y rosa configurable y colores propios para administración, WorldGuard y WorldEdit.
+- Aviso de entrada por chat y action bar, y límites personales con partículas en degradado morado y rosa pastel.
 - SQLite incluido o MySQL con creación automática de tablas.
 - API pública con servicio Bukkit, eventos y operaciones asíncronas de persistencia.
 
@@ -29,10 +30,10 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-2.0.0.jar` en `plugins/` y reinicia el servidor.
+3. Coloca `ViciontProtections-2.0.2.jar` en `plugins/` y reinicia el servidor.
 4. Configura permisos, `plugins/ViciontProtections/config.yml` y `messages.yml`.
 
-La implementación utiliza la API de Spigot y comandos vanilla para los diálogos. Las comprobaciones de ejecución se realizan en Paper; consulta [VALIDATION.md](docs/VALIDATION.md) para distinguir versiones verificadas y alcance.
+Los diálogos usan la API nativa de Spigot 1.21.6+ y, en Paper, el comando vanilla `/dialog` con un emisor silencioso (sin avisos a los OP ni registros en consola). Consulta [VALIDATION.md](docs/VALIDATION.md) para ver qué versiones se han probado y cómo.
 
 No uses `/reload` ni recargadores de plugins. `/pr recargar` recarga mensajes y ajustes; cambiar la conexión SQL necesita reiniciar.
 
@@ -52,10 +53,21 @@ Solo el creador o un administrador puede romper el bloque protector. Al romperlo
 
 ### Menú y guía
 
-- `/proteccion`, `/protections` y `/pr` abren el menú en servidor y cliente **1.21.6 o posterior**.
-- Fuera de una protección se abre la guía. Dentro, el botón **Guía de protecciones** está al final del diálogo.
-- Los botones disponibles respetan tu rol y tus permisos, también al pulsarlos.
-- `/pr guia` está disponible para todos. En versiones anteriores muestra la guía por chat y los enlaces configurados de Spigot y Modrinth.
+- `/proteccion`, `/protections` y `/pr` abren el menú en servidor y cliente **1.21.6 o posterior**, tanto en Spigot como en Paper.
+- Fuera de una protección se abre la guía. Dentro, el botón **Guía de protecciones** queda al final del diálogo.
+- Al colocar un bloque protector se abre directamente el diálogo **Nombra tu protección**.
+- Cada acción del menú vuelve a abrir el diálogo con el resultado (por ejemplo «✔ Alex ahora es miembro»), sin tener que mirar el chat.
+- Los botones dependen de tu rol y se vuelven a comprobar al pulsarlos:
+
+| Rol | Botones del menú |
+| --- | --- |
+| Creador | Añadir/quitar miembro, añadir/quitar propietario, cambiar nombre, límites, información, eliminar |
+| Propietario añadido | Añadir/quitar miembro y límites |
+| Miembro | Datos de la protección y guía |
+| Administración | Todo lo anterior, banderas de WorldGuard, transferir creador y panel de administración |
+
+- El panel de administración (`/pr admin`) incluye formularios para entregar bloques de cualquier material y tamaño, proteger una selección de WorldEdit, ver todas las protecciones y recargar.
+- `/pr guia` está disponible para todos. En versiones anteriores a 1.21.6 los menús, listas e información se muestran en el chat con botones pulsables y descripciones al pasar el ratón.
 - Con ViaVersion instalado se comprueba también la versión del cliente. Puedes desactivar los diálogos con `dialogs.enabled: false`.
 
 La visualización de límites es personal y temporal: no muestra partículas a todos los jugadores y se desactiva al desconectarte o perder acceso.
@@ -69,15 +81,18 @@ Alias principales: `/proteccion`, `/pr`, `/protections`, `/vp` y `/proteccionv`.
 | `/pr` | Menú o guía según tu ubicación y versión |
 | `/pr guia` | Guía y enlaces de las páginas del plugin |
 | `/pr ayuda` | Resumen de comandos |
-| `/pr lista [página]` | Lista paginada de tus protecciones; los administradores pueden ver todas |
+| `/pr lista [página]` | Lista paginada de tus protecciones |
+| `/pr lista todas [página]` | Todas las protecciones del servidor (administración) |
 | `/pr info` | Nombre, ID, dimensiones, creador, propietarios y miembros |
+| `/pr miembros` · `/pr propietarios` | Ver los jugadores con un botón para quitar a cada uno |
 | `/pr nombre <nombre>` | Cambiar el nombre, hasta 48 caracteres |
 | `/pr miembro <añadir\|quitar> <jugador\|UUID>` | Gestionar miembros |
 | `/pr propietario <añadir\|quitar> <jugador\|UUID>` | Gestionar propietarios añadidos |
 | `/pr limites` | Mostrar u ocultar tus partículas de borde |
 | `/pr eliminar` | Pedir confirmación para eliminar la protección |
+| `/pr admin` | Panel de administración (diálogo) |
 | `/pr dar <jugador> <bloque> <ancho> [profundidad] [altura\|todo] [cantidad]` | Entregar bloques protectores |
-| `/pr seleccion <creador> <nombre>` | Proteger tu selección cúbica de WorldEdit |
+| `/pr seleccion <creador> [nombre]` | Proteger tu selección cúbica de WorldEdit |
 | `/pr bandera <bandera> <permitir\|denegar\|restablecer>` | Configurar una bandera de estado de WorldGuard |
 | `/pr transferir <jugador\|UUID>` | Cambiar el creador; el anterior queda como propietario añadido |
 | `/pr recargar` | Recargar ajustes y mensajes |
@@ -100,7 +115,7 @@ Por defecto el límite de dimensiones de los bloques es 4096, configurable con `
 
 `/pr bandera` sin argumentos lista las banderas admitidas. Se excluyen `build` y `passthrough` para conservar el control por miembros. Los mensajes de integración de ViciontProtections tienen su propia paleta; **`/rg` y `//set` conservan los mensajes de sus respectivos plugins**. Gestiona las banderas de estas protecciones con `/pr bandera`: la sincronización reconstruye las regiones a partir de los datos del plugin.
 
-Se mantienen los comandos antiguos: `/givepr`, `/addnamepr`, `/newnamepr`, `/addmember`, `/delmember`, `/addowner`, `/delowner`, `/ownerlist`, `/memberlist`, `/prlist`, `/modnamepr`, `/modmember`, `/modowner`, `/removepr` y `/vpreload`. `/givepr small|medium|large` sigue funcionando. Los comandos `mod*` reciben primero el nombre sin espacios o ID de la protección; miembros/propietarios usan después `añadir|quitar <jugador>`. `/removepr <ID> confirmar` elimina después de confirmarlo.
+Se mantienen los comandos antiguos: `/givepr`, `/addnamepr`, `/newnamepr`, `/addmember`, `/delmember`, `/addowner`, `/delowner`, `/ownerlist`, `/memberlist`, `/prlist`, `/modnamepr`, `/modmember`, `/modowner`, `/removepr` y `/vpreload`. `/ownerlist` y `/memberlist` equivalen a `/pr propietarios` y `/pr miembros`. `/givepr small|medium|large` sigue funcionando. Los comandos `mod*` reciben primero el nombre sin espacios o ID de la protección; miembros/propietarios usan después `añadir|quitar <jugador>`. `/removepr <ID> confirmar` elimina después de confirmarlo.
 
 El sistema de intercambios de aldeanos y `/prvillager` se han retirado.
 
@@ -148,7 +163,18 @@ Los permisos Bukkit habilitan la función; el rol dentro de la protección deter
 
 ## ۞ Mensajes y enlaces
 
-Los mensajes predeterminados están en español, con el símbolo **۞** y colores hex `&#RRGGBB`. `messages.yml` permite cambiar los prefijos públicos, administrativos y de integración, los avisos de entrada y la guía. Los avisos y formularios adicionales usan la misma paleta desde el código.
+Todos los mensajes están en español, con el símbolo **۞** y el prefijo **`[Viciont Protections]`** en degradado morado → rosa. La administración, WorldGuard y WorldEdit tienen su propia etiqueta y color (`Admin »`, `WorldGuard »`, `WorldEdit »`).
+
+En `messages.yml` puedes cambiar los prefijos, la paleta, los avisos de entrada/salida (chat y action bar), el aviso de creación, el mensaje de WorldGuard al denegar una acción y la guía. Formatos admitidos:
+
+| Formato | Ejemplo |
+| --- | --- |
+| Hex | `&#F5B3DA` |
+| Códigos clásicos | `&l`, `&o` |
+| Degradado | `<gradient:#C29BFF:#F5A8D6>Viciont Protections</gradient>` |
+| Paleta | `{titulo}` `{texto}` `{suave}` `{dato}` `{acento}` `{error}` `{admin}` `{worldguard}` `{worldedit}` |
+
+Los colores de la sección `colores:` se aplican también a menús, listas y diálogos. Un mensaje vacío (`''`) lo desactiva. Cuando una actualización trae mensajes nuevos, el plugin guarda tu archivo como `messages-vN-anterior.yml` y crea uno actualizado.
 
 En `config.yml`, completa los enlaces cuando publiques las páginas de guía:
 
@@ -178,20 +204,20 @@ database:
     ssl-mode: PREFERRED
 ```
 
-Las escrituras son transaccionales y se ejecutan fuera del hilo principal. Las consultas durante el movimiento utilizan la caché y el índice de WorldGuard. Si una escritura falla, el plugin intenta restaurar el estado anterior y avisa al usuario.
+Las tablas de MySQL/MariaDB se crean en `utf8mb4`, así que los nombres con acentos u otros alfabetos funcionan aunque la base use otra codificación. Las escrituras son transaccionales y se ejecutan fuera del hilo principal. Las consultas durante el movimiento utilizan la caché y el índice de WorldGuard. Si una escritura falla, el plugin intenta restaurar el estado anterior y avisa al usuario.
 
 ### Desde 1.x
 
 1. Detén el servidor y guarda una copia de las carpetas de ViciontProtections y WorldGuard.
 2. Instala WorldEdit/WorldGuard compatibles y reemplaza el JAR del plugin.
-3. Arranca y revisa la consola. El importador conserva las tablas antiguas; con SQLite también crea `protections-pre-2.0.db` una sola vez.
+3. Arranca y revisa la consola. El importador conserva las tablas antiguas; con SQLite también crea `protections-pre-2.0.db` una sola vez. Las secciones `messages` y `villager` de tu `config.yml` antiguo se retiran (los mensajes ahora están en `messages.yml`) y se guarda una copia en `config-1.x-anterior.yml`.
 4. Comprueba tus regiones y concede los nuevos permisos de usuario a tus grupos.
 
 La migración conserva creador, propietarios, miembros y **los límites inclusivos originales**: una protección antigua configurada como 32 abarcaba 33 bloques y seguirá abarcándolos. Los bloques ya entregados con los tres CustomModelData antiguos siguen siendo reconocidos. Las protecciones sin nombre reciben uno automáticamente.
 
 Si configuras MySQL al actualizar desde 1.x y conservas el SQLite antiguo en la carpeta del plugin, se importa a las nuevas tablas. La migración es idempotente. Si faltan dueños principales o hay datos inválidos, el inicio se detiene para que puedas corregirlos; no se borra la información antigua.
 
-**Cambiar SQLite por MySQL después de usar 2.0 requiere trasladar las tablas nuevas antes de arrancar con la nueva conexión.** El importador automático solo cubre el formato 1.x. Cada servidor debe usar su propia base o prefijo: no hay sincronización en vivo entre varios servidores. Conserva los nombres de los mundos al mover sus datos.
+**Para pasar de SQLite a MySQL** basta con cambiar `database.type` y reiniciar: si la base MySQL está vacía, el plugin copia las protecciones del archivo SQLite (que se conserva como copia) y anota la importación para no repetirla. Cada servidor debe usar su propia base o prefijo: no hay sincronización en vivo entre varios servidores. Conserva los nombres de los mundos al mover sus datos.
 
 ## ۞ Para desarrolladores
 
@@ -203,7 +229,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-2.0.0.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-2.0.2.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 

@@ -27,22 +27,28 @@ public final class ProtectionListener implements Listener {
   private final ProtectionManager manager;
   private final Messages messages;
   private final Boundaries boundaries;
+  private final ProtectionDialogs dialogs;
   private final Map<BlockPlaceEvent, CreateProtectionRequest> placements = new WeakHashMap<>();
   private final Map<UUID, Protection> current = new HashMap<>();
 
   public ProtectionListener(
-      JavaPlugin plugin, ProtectionManager manager, Messages messages, Boundaries boundaries) {
+      JavaPlugin plugin,
+      ProtectionManager manager,
+      Messages messages,
+      Boundaries boundaries,
+      ProtectionDialogs dialogs) {
     this.plugin = plugin;
     this.manager = manager;
     this.messages = messages;
     this.boundaries = boundaries;
+    this.dialogs = dialogs;
   }
 
   @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void validatePlace(BlockPlaceEvent event) {
     if (anchor(event.getBlockPlaced())) {
       event.setCancelled(true);
-      messages.send(event.getPlayer(), "Retira primero el bloque protector.");
+      messages.fail(event.getPlayer(), "Ahí está el bloque protector de una protección.");
       return;
     }
     var spec = manager.readProtectionBlock(event.getItemInHand());
@@ -110,12 +116,19 @@ public final class ProtectionListener implements Listener {
                           messages.error(event.getPlayer(), error);
                         });
               } else {
-                messages.send(
-                    event.getPlayer(),
-                    "&#E6CCFFCreada &#F1B9DE"
-                        + protection.name()
-                        + "&#E6CCFF. Usa /pr nombre <nombre> o /proteccion.");
-                update(event.getPlayer());
+                Player player = event.getPlayer();
+                messages.notice(player, "avisos.creada", "name", protection.name());
+                update(player);
+                // Como en 1.1.1: se invita a nombrarla nada más colocarla.
+                if (!dialogs.form(player, protection, "nombrar", null))
+                  messages.components(
+                      player,
+                      false,
+                      Messages.button(
+                          "{acento}[✎ Ponle nombre]",
+                          "{texto}Escribe el nombre tras el comando",
+                          "/pr @" + protection.id() + " nombre ",
+                          false));
               }
             });
   }
@@ -128,8 +141,7 @@ public final class ProtectionListener implements Listener {
     Protection protection = value.get();
     Player player = event.getPlayer();
     if (!AccessPolicy.allows(player, protection, AccessPolicy.Action.DELETE)) {
-      messages.send(
-          player, "&#F1B9DESolo el creador o un administrador puede retirar este bloque.");
+      messages.fail(player, "Solo el creador o la administración pueden retirar este bloque.");
       return;
     }
     manager
@@ -141,7 +153,13 @@ public final class ProtectionListener implements Listener {
                 if (player.getGameMode() != GameMode.CREATIVE)
                   ProtectionCommand.giveItem(
                       player, manager.createProtectionBlock(protection.anchor().block(), 1));
-                messages.send(player, "&#E6CCFFProtección retirada.");
+                messages.send(
+                    player,
+                    "Retiraste la protección {dato}"
+                        + protection.name()
+                        + (player.getGameMode() == GameMode.CREATIVE
+                            ? "{texto}."
+                            : "{texto}; el bloque volvió a tu inventario."));
               }
             });
   }
@@ -252,7 +270,7 @@ public final class ProtectionListener implements Listener {
       return;
     if (next == null) current.remove(player.getUniqueId());
     else current.put(player.getUniqueId(), next);
-    if (previous != null) messages.send(player, messages.text("left", "name", previous.name()));
+    if (previous != null && next == null) messages.left(player, previous.name());
     if (next != null)
       messages.entered(player, next.name(), ProtectionDialogs.ownerName(next.primaryOwner()));
     Bukkit.getPluginManager().callEvent(new ProtectionCrossedEvent(player, previous, next));

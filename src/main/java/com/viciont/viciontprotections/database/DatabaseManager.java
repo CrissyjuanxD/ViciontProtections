@@ -95,18 +95,18 @@ public final class DatabaseManager implements AutoCloseable {
         store.migrateLegacy(connection);
       }
       if (type.equals("mysql") && Files.isRegularFile(sqlite)) {
-        try (Connection legacy = DriverManager.getConnection("jdbc:sqlite:" + sqlite)) {
-          if (store.hasTable(legacy, store.table("protections")) && store.loadAll().isEmpty()) {
-            try (Statement sql = legacy.createStatement();
-                ResultSet rows =
-                    sql.executeQuery("SELECT COUNT(*) FROM " + store.table("protections"))) {
-              if (rows.next() && rows.getLong(1) > 0)
-                throw new SQLException(
-                    "Hay datos SQLite de 2.0. Traslada las tablas a MySQL antes de cambiar de"
-                        + " conexión; no se importarán datos antiguos sobre una base vacía.");
-            }
-          }
-          store.migrateLegacy(legacy);
+        try (Connection local = DriverManager.getConnection("jdbc:sqlite:" + sqlite)) {
+          int copied = store.importSqlite(local);
+          if (copied > 0)
+            plugin
+                .getLogger()
+                .info(
+                    "Se copiaron "
+                        + copied
+                        + " protecciones de "
+                        + filename
+                        + " a MySQL. El archivo SQLite se conserva como copia.");
+          store.migrateLegacy(local);
         }
       }
       return store;
@@ -123,10 +123,17 @@ public final class DatabaseManager implements AutoCloseable {
   private void initialize() throws SQLException {
     try (Connection connection = pool.getConnection();
         Statement sql = connection.createStatement()) {
+      // MySQL/MariaDB: utf8mb4 para nombres con acentos u otros alfabetos aunque el servidor use otro.
+      String product = connection.getMetaData().getDatabaseProductName().toLowerCase(Locale.ROOT);
+      String charset =
+          product.contains("mysql") || product.contains("mariadb")
+              ? " DEFAULT CHARSET=utf8mb4"
+              : "";
       sql.executeUpdate(
           "CREATE TABLE IF NOT EXISTS "
               + table("meta")
-              + " (meta_key VARCHAR(100) PRIMARY KEY, meta_value VARCHAR(255) NOT NULL)");
+              + " (meta_key VARCHAR(100) PRIMARY KEY, meta_value VARCHAR(255) NOT NULL)"
+              + charset);
       sql.executeUpdate(
           "CREATE TABLE IF NOT EXISTS "
               + table("protections")
@@ -134,7 +141,8 @@ public final class DatabaseManager implements AutoCloseable {
               + " NOT NULL, min_x INT NOT NULL, min_y INT NOT NULL, min_z INT NOT NULL, max_x INT"
               + " NOT NULL, max_y INT NOT NULL, max_z INT NOT NULL, primary_owner VARCHAR(36) NOT"
               + " NULL, flags TEXT NOT NULL, anchor_x INT, anchor_y INT, anchor_z INT, material"
-              + " VARCHAR(80), width INT, depth INT, height INT, created_at BIGINT NOT NULL)");
+              + " VARCHAR(80), width INT, depth INT, height INT, created_at BIGINT NOT NULL)"
+              + charset);
       sql.executeUpdate(
           "CREATE TABLE IF NOT EXISTS "
               + table("roles")
@@ -142,12 +150,58 @@ public final class DatabaseManager implements AutoCloseable {
               + " VARCHAR(10) NOT NULL, PRIMARY KEY (protection_id, player_uuid), FOREIGN KEY"
               + " (protection_id) REFERENCES "
               + table("protections")
-              + " (id) ON DELETE CASCADE)");
+              + " (id) ON DELETE CASCADE)"
+              + charset);
     }
   }
 
   public List<Protection> loadAll() throws SQLException {
     try (Connection connection = pool.getConnection()) {
+      return loadAll(connection);
+    }
+  }
+
+  /**
+   * Al pasar de SQLite a MySQL, copia las protecciones 2.x del archivo local si la base MySQL aún
+   * no tiene ninguna. Devuelve cuántas se copiaron.
+   */
+  int importSqlite(Connection local) throws SQLException {
+    if (!hasTable(local, table("protections")) || !hasTable(local, table("roles"))) return 0;
+    if (!loadAll().isEmpty()) return 0;
+    List<Protection> found = loadAll(local);
+    if (found.isEmpty()) return 0;
+    // Marcas como legacy_v1: evitan que la importación de 1.x se repita sobre los datos copiados.
+    Map<String, String> meta = new HashMap<>();
+    if (hasTable(local, table("meta")))
+      try (Statement sql = local.createStatement();
+          ResultSet rows = sql.executeQuery("SELECT meta_key,meta_value FROM " + table("meta"))) {
+        while (rows.next()) meta.put(rows.getString(1), rows.getString(2));
+      }
+    meta.remove("sqlite_import");
+    transaction(
+        connection -> {
+          for (Protection protection : found) write(connection, protection);
+          try (PreparedStatement sql =
+              connection.prepareStatement(
+                  "INSERT INTO " + table("meta") + " (meta_key,meta_value) VALUES (?,?)")) {
+            for (var entry : meta.entrySet()) {
+              sql.setString(1, entry.getKey());
+              sql.setString(2, entry.getValue());
+              sql.executeUpdate();
+            }
+          }
+          try (PreparedStatement sql =
+              connection.prepareStatement(
+                  "INSERT INTO " + table("meta") + " (meta_key,meta_value) VALUES ('sqlite_import',?)")) {
+            sql.setString(1, Integer.toString(found.size()));
+            sql.executeUpdate();
+          }
+        });
+    return found.size();
+  }
+
+  private List<Protection> loadAll(Connection connection) throws SQLException {
+    {
       Map<UUID, Set<UUID>> owners = new HashMap<>(), members = new HashMap<>();
       try (Statement sql = connection.createStatement();
           ResultSet rows = sql.executeQuery("SELECT * FROM " + table("roles"))) {
