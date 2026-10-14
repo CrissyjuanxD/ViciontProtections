@@ -1,5 +1,15 @@
 # Cambios
 
+## 2.0.3
+
+### Novedades
+
+- Opción `permissions.require-user-permissions` en `config.yml`, desactivada por defecto: así cualquier jugador puede colocar bloques protectores y gestionar sus protecciones sin plugin de permisos, como en 1.x. Con `true`, los permisos `viciontprotections.user.*` vuelven a ser solo de OP. Se aplica al arrancar y con `/pr recargar`; los de administración siguen siendo de OP.
+
+### Correcciones
+
+- La guía de `/proteccion` mostraba dos botones «Cerrar» a quien no tenía protecciones ni el permiso de listar.
+
 ## 2.0.2
 
 ### Correcciones

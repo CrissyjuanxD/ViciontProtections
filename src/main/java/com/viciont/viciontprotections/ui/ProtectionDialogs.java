@@ -560,9 +560,18 @@ public class ProtectionDialogs {
   }
 
   protected boolean show(Player player, JsonObject dialog) {
-    if (dialog.has("actions") && dialog.getAsJsonArray("actions").isEmpty())
-      add(dialog, "{texto}Cerrar", null, null);
+    withOneAction(dialog);
     return transport.show(player, dialog);
+  }
+
+  /**
+   * Un diálogo de varias acciones necesita al menos un botón. Si no tiene ninguno, su botón inferior
+   * pasa a ser ese botón; antes se añadía otro «Cerrar» y la guía salía con dos.
+   */
+  static void withOneAction(JsonObject dialog) {
+    if (!dialog.has("actions") || !dialog.getAsJsonArray("actions").isEmpty()) return;
+    if (dialog.has("exit_action")) dialog.getAsJsonArray("actions").add(dialog.remove("exit_action"));
+    else add(dialog, "{texto}Cerrar", null, null);
   }
 
   // ---------------------------------------------------------------- utilidades

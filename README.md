@@ -10,7 +10,7 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-2.0.2-B995E8)
+![Versión](https://img.shields.io/badge/Versión-2.0.3-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
 [Guía](#-guía-para-jugadores) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
@@ -32,8 +32,8 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-2.0.2.jar` en `plugins/` y reinicia el servidor.
-4. Configura permisos, `plugins/ViciontProtections/config.yml` y `messages.yml`.
+3. Coloca `ViciontProtections-2.0.3.jar` en `plugins/` y reinicia el servidor.
+4. Configura `plugins/ViciontProtections/config.yml` y `messages.yml`. Los permisos son opcionales: sin plugin de permisos cualquier jugador puede usar las funciones de usuario (consulta [Permisos y roles](#-permisos-y-roles)).
 
 Los diálogos usan la API nativa de Spigot 1.21.6+ y, en Paper, el comando vanilla `/dialog` con un emisor silencioso (sin avisos a los OP ni registros en consola). Consulta [VALIDATION.md](docs/VALIDATION.md) para ver qué versiones se han probado y cómo.
 
@@ -123,11 +123,22 @@ El sistema de intercambios de aldeanos y `/prvillager` se han retirado.
 
 ## ۞ Permisos y roles
 
-**Todos los permisos de gestión tienen `default: op`.** La guía y la ayuda son públicas. Para permitir el uso normal a jugadores, concede el grupo de permisos de usuario; por ejemplo, con LuckPerms:
+**Por defecto, los permisos de usuario son de todos**: cualquier jugador puede colocar bloques protectores y gestionar sus protecciones sin plugin de permisos. Los de administración (`viciontprotections.admin.*`) son solo de OP. La guía y la ayuda son públicas.
+
+Se controla en `config.yml`:
+
+```yaml
+permissions:
+  require-user-permissions: false
+```
+
+Con `true`, los permisos de usuario pasan a ser solo de OP y hay que concederlos con un plugin de permisos; por ejemplo, con LuckPerms:
 
 ```text
 /lp group default permission set viciontprotections.user.* true
 ```
+
+El cambio se aplica al arrancar y con `/pr recargar`. Con cualquiera de los dos valores, un plugin de permisos puede seguir dando o quitando permisos concretos.
 
 Los permisos Bukkit habilitan la función; el rol dentro de la protección determina sobre qué protección puedes usarla.
 
@@ -213,7 +224,7 @@ Las tablas de MySQL/MariaDB se crean en `utf8mb4`, así que los nombres con acen
 1. Detén el servidor y guarda una copia de las carpetas de ViciontProtections y WorldGuard.
 2. Instala WorldEdit/WorldGuard compatibles y reemplaza el JAR del plugin.
 3. Arranca y revisa la consola. El importador conserva las tablas antiguas; con SQLite también crea `protections-pre-2.0.db` una sola vez. Las secciones `messages` y `villager` de tu `config.yml` antiguo se retiran (los mensajes ahora están en `messages.yml`) y se guarda una copia en `config-1.x-anterior.yml`.
-4. Comprueba tus regiones y concede los nuevos permisos de usuario a tus grupos.
+4. Comprueba tus regiones. Los jugadores conservan el acceso a las funciones de usuario como en 1.x, salvo que actives `permissions.require-user-permissions`.
 
 La migración conserva creador, propietarios, miembros y **los límites inclusivos originales**: una protección antigua configurada como 32 abarcaba 33 bloques y seguirá abarcándolos. Los bloques ya entregados con los tres CustomModelData antiguos siguen siendo reconocidos. Las protecciones sin nombre reciben uno automáticamente.
 
@@ -231,7 +242,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-2.0.2.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-2.0.3.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 

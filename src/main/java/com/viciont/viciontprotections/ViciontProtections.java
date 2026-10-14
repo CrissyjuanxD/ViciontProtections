@@ -6,6 +6,7 @@ import com.viciont.viciontprotections.database.DatabaseManager;
 import com.viciont.viciontprotections.integration.WorldGuardBridge;
 import com.viciont.viciontprotections.listeners.ProtectionListener;
 import com.viciont.viciontprotections.managers.ProtectionManager;
+import com.viciont.viciontprotections.security.AccessPolicy;
 import com.viciont.viciontprotections.ui.*;
 import java.util.Objects;
 import org.bukkit.plugin.ServicePriority;
@@ -27,8 +28,10 @@ public final class ViciontProtections extends JavaPlugin {
     try {
       saveDefaultConfig();
       cleanLegacyConfig();
+      addMissingSections();
       getConfig().options().copyDefaults(true);
       saveConfig();
+      AccessPolicy.applyUserDefaults(this);
       messages = new Messages(this);
       database = DatabaseManager.open(this);
       var guard = new WorldGuardBridge();
@@ -101,6 +104,25 @@ public final class ViciontProtections extends JavaPlugin {
                 + " están en messages.yml). Copia guardada en "
                 + backup.getFileName()
                 + ".");
+  }
+
+  /**
+   * Las secciones nuevas de config.yml (como permissions en 2.0.3) se añaden al final con su
+   * comentario; copyDefaults las dejaba arriba del archivo y sin explicar.
+   */
+  private void addMissingSections() {
+    var config = getConfig();
+    var defaults = config.getDefaults();
+    if (defaults == null) return;
+    for (String key : defaults.getKeys(false)) {
+      if (config.contains(key, true)) continue;
+      var section = defaults.getConfigurationSection(key);
+      if (section == null) config.set(key, defaults.get(key));
+      else
+        for (String path : section.getKeys(true))
+          if (!section.isConfigurationSection(path)) config.set(key + "." + path, section.get(path));
+      config.setComments(key, defaults.getComments(key));
+    }
   }
 
   @Override

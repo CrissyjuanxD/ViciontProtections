@@ -388,6 +388,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     permission(flow.sender, "viciontprotections.admin.reload");
     flow.views(notice -> dialogs.admin(flow.player, notice), notice -> dialogs.admin(flow.player, notice));
     plugin.reloadConfig();
+    AccessPolicy.applyUserDefaults(plugin);
     messages.reload();
     manager.guard().setDenyMessage(messages.text("avisos.denegado"));
     manager.resync();

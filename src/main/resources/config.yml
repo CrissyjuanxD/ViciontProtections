@@ -14,6 +14,11 @@ database:
 protections:
   max-per-player: 20
   max-block-size: 4096
+# Permisos de usuario (viciontprotections.user.*): colocar bloques protectores y gestionar tus protecciones.
+# false: cualquier jugador puede usarlos, sin plugin de permisos. true: solo los OP o quien tenga el
+# permiso (por ejemplo con LuckPerms). Los de administración (viciontprotections.admin.*) siempre son de OP.
+permissions:
+  require-user-permissions: false
 # Los diálogos requieren servidor y cliente 1.21.6 o posterior.
 dialogs:
   enabled: true

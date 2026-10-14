@@ -76,4 +76,30 @@ class UiTest {
         "/pr @x eliminar confirmar",
         ((StaticAction) dialog.yes().action()).clickEvent().getValue());
   }
+
+  @Test
+  void dialogWithoutActionsKeepsASingleCloseButton() {
+    JsonObject guide =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:multi_action","title":{"text":"Guía"},"body":[],"actions":[],
+                 "exit_action":{"label":{"text":"Cerrar"},"width":150}}
+                """)
+            .getAsJsonObject();
+    ProtectionDialogs.withOneAction(guide);
+    assertEquals(1, guide.getAsJsonArray("actions").size());
+    assertFalse(guide.has("exit_action"));
+    assertEquals(
+        "Cerrar",
+        guide.getAsJsonArray("actions").get(0).getAsJsonObject().getAsJsonObject("label").get("text").getAsString());
+
+    JsonObject empty =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:multi_action","title":{"text":"Lista"},"body":[],"actions":[]}
+                """)
+            .getAsJsonObject();
+    ProtectionDialogs.withOneAction(empty);
+    assertEquals(1, empty.getAsJsonArray("actions").size());
+  }
 }
