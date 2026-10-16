@@ -1,5 +1,12 @@
 # Cambios
 
+## 2.0.4
+
+### Correcciones
+
+- Al eliminar una protección desde el menú (o con `/pr eliminar confirmar`) el bloque protector se quedaba puesto como bloque normal y no se devolvía. Ahora se quita del suelo y vuelve al inventario de quien la elimina (en creativo solo se quita; desde la consola cae en su sitio). Solo se devuelve si el bloque seguía puesto, así no se puede duplicar.
+- Los bloques protectores ya no sirven para craftear ni fundir: mesa de crafteo, crafter, herrería, cortapiedras, piedra de afilar, telar y hornos los rechazan. Antes, por ejemplo, un bloque protector de netherite daba 9 lingotes de netherite.
+
 ## 2.0.3
 
 ### Novedades

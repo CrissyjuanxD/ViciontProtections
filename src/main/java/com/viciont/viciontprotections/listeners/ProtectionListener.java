@@ -13,6 +13,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.inventory.*;
+import org.bukkit.event.block.CrafterCraftEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.inventory.ItemStack;
@@ -176,6 +178,54 @@ public final class ProtectionListener implements Listener {
 
   private boolean anchor(org.bukkit.block.Block block) {
     return manager.anchorAt(block.getLocation()).isPresent();
+  }
+
+  private boolean protectionItem(ItemStack item) {
+    return item != null && manager.readProtectionBlock(item).isPresent();
+  }
+
+  private boolean anyProtectionItem(ItemStack... items) {
+    for (ItemStack item : items) if (protectionItem(item)) return true;
+    return false;
+  }
+
+  // Los bloques protectores no sirven de ingrediente: si no, un bloque de netherite daría 9 lingotes. Se tapa la
+  // mesa, el crafter, la herrería, la piedra de afilar, el cortapiedras, el telar y los hornos
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void prepareCraft(PrepareItemCraftEvent event) {
+    if (anyProtectionItem(event.getInventory().getMatrix())) event.getInventory().setResult(null);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void craft(CraftItemEvent event) {
+    if (anyProtectionItem(event.getInventory().getMatrix())) event.setCancelled(true);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void crafter(CrafterCraftEvent event) {
+    if (event.getBlock().getState() instanceof org.bukkit.block.Crafter crafter
+        && anyProtectionItem(crafter.getInventory().getContents())) event.setCancelled(true);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void prepareResult(PrepareInventoryResultEvent event) {
+    if (anyProtectionItem(event.getInventory().getContents())) event.setResult(null);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void takeResult(InventoryClickEvent event) {
+    if (event.getSlotType() != InventoryType.SlotType.RESULT) return;
+    if (anyProtectionItem(event.getView().getTopInventory().getContents())) event.setCancelled(true);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+  public void smelt(FurnaceSmeltEvent event) {
+    if (protectionItem(event.getSource())) event.setCancelled(true);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+  public void burn(FurnaceBurnEvent event) {
+    if (protectionItem(event.getFuel())) event.setCancelled(true);
   }
 
   @EventHandler(ignoreCancelled = true)

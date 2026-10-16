@@ -246,7 +246,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
               manager.deleteProtection(id),
               theme,
               () -> "Eliminaste la protección {dato}" + protection.name() + "{texto}.",
-              null);
+              () -> returnAnchor(sender, protection));
         else if (!(sender instanceof Player p && dialogs.confirmDelete(p, protection)))
           chat.confirmDelete(sender, protection);
       }
@@ -451,6 +451,25 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
               + " {texto}de {dato}"
               + spec.dimensions()
               + "{texto}. Colócalo para proteger tu zona.");
+  }
+
+  // Al eliminar desde el menú se quita el bloque físico y se devuelve el bloque protector (no el vanilla); solo
+  // se devuelve si el bloque seguía puesto, para que no se pueda duplicar
+  private void returnAnchor(CommandSender sender, Protection protection) {
+    Anchor anchor = protection.anchor();
+    World world = Bukkit.getWorld(protection.worldName());
+    if (anchor == null || world == null) return;
+    var block = world.getBlockAt(anchor.x(), anchor.y(), anchor.z());
+    if (block.getType() != anchor.block().material()) return;
+    block.setType(Material.AIR, false);
+    ItemStack item = manager.createProtectionBlock(anchor.block(), 1);
+    if (sender instanceof Player player) {
+      if (player.getGameMode() == GameMode.CREATIVE) return;
+      giveItem(player, item);
+      messages.send(player, "{texto}El bloque protector volvió a tu inventario.");
+    } else {
+      world.dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item);
+    }
   }
 
   public static void giveItem(Player player, ItemStack item) {

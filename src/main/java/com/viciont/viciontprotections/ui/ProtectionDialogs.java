@@ -460,8 +460,8 @@ public class ProtectionDialogs {
     dialog.addProperty("can_close_with_escape", true);
     dialog.add("body", new JsonArray());
     body(dialog, "{texto}¿Eliminar {dato}" + p.name() + "{texto}?");
-    body(dialog, "{error}La zona dejará de estar protegida. El bloque protector no se devuelve.");
-    body(dialog, "{suave}Si quieres recuperar el bloque, rómpelo en lugar de eliminar la protección.");
+    body(dialog, "{error}La zona dejará de estar protegida.");
+    body(dialog, "{suave}El bloque protector se quita del suelo y vuelve a tu inventario.");
     dialog.add("yes", button("{error}✘ Sí, eliminar", null, root(p) + "eliminar confirmar"));
     dialog.add("no", button("{texto}Cancelar", null, root(p) + "menu"));
     return show(player, dialog);

@@ -10,7 +10,7 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-2.0.3-B995E8)
+![Versión](https://img.shields.io/badge/Versión-2.0.4-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
 [Guía](#-guía-para-jugadores) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
@@ -32,7 +32,7 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-2.0.3.jar` en `plugins/` y reinicia el servidor.
+3. Coloca `ViciontProtections-2.0.4.jar` en `plugins/` y reinicia el servidor.
 4. Configura `plugins/ViciontProtections/config.yml` y `messages.yml`. Los permisos son opcionales: sin plugin de permisos cualquier jugador puede usar las funciones de usuario (consulta [Permisos y roles](#-permisos-y-roles)).
 
 Los diálogos usan la API nativa de Spigot 1.21.6+ y, en Paper, el comando vanilla `/dialog` con un emisor silencioso (sin avisos a los OP ni registros en consola). Consulta [VALIDATION.md](docs/VALIDATION.md) para ver qué versiones se han probado y cómo.
@@ -242,7 +242,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-2.0.3.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-2.0.4.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 
