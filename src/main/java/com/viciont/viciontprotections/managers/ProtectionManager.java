@@ -378,12 +378,23 @@ public final class ProtectionManager implements ViciontProtectionsApi {
   }
 
   private void removeAnchor(Protection old) {
-    Anchor anchor = old.anchor();
-    World world = Bukkit.getWorld(old.worldName());
-    if (anchor != null && world != null) {
-      var block = world.getBlockAt(anchor.x(), anchor.y(), anchor.z());
-      if (block.getType() == anchor.block().material()) block.setType(Material.AIR, false);
+    if (anchorPlaced(old)) {
+      Anchor anchor = old.anchor();
+      Bukkit.getWorld(old.worldName())
+          .getBlockAt(anchor.x(), anchor.y(), anchor.z())
+          .setType(Material.AIR, false);
     }
+  }
+
+  /** Si el bloque protector de la protección sigue puesto en el mundo. */
+  public boolean anchorPlaced(Protection protection) {
+    requireMain();
+    Anchor anchor = protection.anchor();
+    World world = Bukkit.getWorld(protection.worldName());
+    return anchor != null
+        && world != null
+        && world.getBlockAt(anchor.x(), anchor.y(), anchor.z()).getType()
+            == anchor.block().material();
   }
 
   private <T> CompletableFuture<T> main(Supplier<CompletableFuture<T>> action) {

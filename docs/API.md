@@ -1,4 +1,4 @@
-# API de ViciontProtections 2.0.4
+# API de ViciontProtections 2.0.5
 
 La API permite integrar tiendas, recompensas, generación de parcelas y otros sistemas sin ejecutar comandos ni escribir SQL. Los tipos públicos están en `com.viciont.viciontprotections.api`; `Protection` es un registro inmutable en `com.viciont.viciontprotections.models`.
 
@@ -7,14 +7,14 @@ La API permite integrar tiendas, recompensas, generación de parcelas y otros si
 Compila contra el JAR de ViciontProtections con alcance `provided`. Si lo instalas en tu repositorio Maven local:
 
 ```bash
-mvn install:install-file -Dfile=ViciontProtections-2.0.4.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=2.0.4 -Dpackaging=jar
+mvn install:install-file -Dfile=ViciontProtections-2.0.5.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=2.0.5 -Dpackaging=jar
 ```
 
 ```xml
 <dependency>
     <groupId>com.viciont</groupId>
     <artifactId>ViciontProtections</artifactId>
-    <version>2.0.4</version>
+    <version>2.0.5</version>
     <scope>provided</scope>
 </dependency>
 ```

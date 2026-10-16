@@ -1,5 +1,12 @@
 # Cambios
 
+## 2.0.5
+
+### Correcciones
+
+- Eliminar una protección desde el menú (o con `/pr eliminar confirmar`) seguía sin devolver el bloque protector en 2.0.4: el bloque ya se había quitado del suelo cuando se comprobaba. Ahora se comprueba antes de eliminar y el bloque vuelve al inventario.
+- El bloqueo de crafteos solo mira los huecos de entrada: comprar un bloque protector a un aldeano o sacar lo ya fundido de un horno ya no se bloquea por error. También se tapan el yunque, la mesa de cartografía y los aldeanos, y el horno no gasta combustible intentando fundir un bloque protector.
+
 ## 2.0.4
 
 ### Correcciones

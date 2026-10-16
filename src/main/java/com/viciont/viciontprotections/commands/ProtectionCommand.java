@@ -241,13 +241,20 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
       case "eliminar", "delete", "borrar" -> {
         allowed(sender, protection, Action.DELETE);
         if (values.length == 1
-            && (values[0].equalsIgnoreCase("confirmar") || values[0].equalsIgnoreCase("confirm")))
+            && (values[0].equalsIgnoreCase("confirmar") || values[0].equalsIgnoreCase("confirm"))) {
+          // Se mira antes de eliminar: al terminar, el gestor ya quitó el bloque del suelo
+          boolean refund = manager.anchorPlaced(protection);
+          boolean toInventory =
+              refund && sender instanceof Player deleter && deleter.getGameMode() != GameMode.CREATIVE;
           flow.await(
               manager.deleteProtection(id),
               theme,
-              () -> "Eliminaste la protección {dato}" + protection.name() + "{texto}.",
-              () -> returnAnchor(sender, protection));
-        else if (!(sender instanceof Player p && dialogs.confirmDelete(p, protection)))
+              () ->
+                  "Eliminaste la protección {dato}"
+                      + protection.name()
+                      + (toInventory ? "{texto}; el bloque protector volvió a tu inventario." : "{texto}."),
+              refund ? () -> refundAnchor(sender, protection) : null);
+        } else if (!(sender instanceof Player p && dialogs.confirmDelete(p, protection)))
           chat.confirmDelete(sender, protection);
       }
       case "transferir", "transfer" -> {
@@ -453,23 +460,18 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
               + "{texto}. Colócalo para proteger tu zona.");
   }
 
-  // Al eliminar desde el menú se quita el bloque físico y se devuelve el bloque protector (no el vanilla); solo
-  // se devuelve si el bloque seguía puesto, para que no se pueda duplicar
-  private void returnAnchor(CommandSender sender, Protection protection) {
+  // Al eliminar desde el menú o con /pr eliminar se devuelve el bloque protector (no el bloque vanilla), igual
+  // que al romperlo. En creativo no se da nada y desde la consola cae donde estaba
+  private void refundAnchor(CommandSender sender, Protection protection) {
     Anchor anchor = protection.anchor();
-    World world = Bukkit.getWorld(protection.worldName());
-    if (anchor == null || world == null) return;
-    var block = world.getBlockAt(anchor.x(), anchor.y(), anchor.z());
-    if (block.getType() != anchor.block().material()) return;
-    block.setType(Material.AIR, false);
     ItemStack item = manager.createProtectionBlock(anchor.block(), 1);
-    if (sender instanceof Player player) {
-      if (player.getGameMode() == GameMode.CREATIVE) return;
-      giveItem(player, item);
-      messages.send(player, "{texto}El bloque protector volvió a tu inventario.");
-    } else {
-      world.dropItemNaturally(block.getLocation().add(0.5, 0.5, 0.5), item);
+    if (sender instanceof Player player && player.isOnline()) {
+      if (player.getGameMode() != GameMode.CREATIVE) giveItem(player, item);
+      return;
     }
+    World world = Bukkit.getWorld(protection.worldName());
+    if (world != null)
+      world.dropItemNaturally(new Location(world, anchor.x() + 0.5, anchor.y() + 0.5, anchor.z() + 0.5), item);
   }
 
   public static void giveItem(Player player, ItemStack item) {

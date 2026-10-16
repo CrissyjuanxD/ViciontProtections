@@ -14,9 +14,11 @@ import org.bukkit.event.*;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.*;
-import org.bukkit.event.block.CrafterCraftEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.world.WorldLoadEvent;
+import org.bukkit.inventory.FurnaceInventory;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -189,16 +191,34 @@ public final class ProtectionListener implements Listener {
     return false;
   }
 
-  // Los bloques protectores no sirven de ingrediente: si no, un bloque de netherite daría 9 lingotes. Se tapa la
-  // mesa, el crafter, la herrería, la piedra de afilar, el cortapiedras, el telar y los hornos
+  // Solo mira los huecos de entrada (no el resultado), así se puede seguir comprando un bloque protector
+  private boolean protectionInput(InventoryView view) {
+    Inventory top = view.getTopInventory();
+    for (int slot = 0; slot < top.getSize(); slot++)
+      if (view.getSlotType(slot) != InventoryType.SlotType.RESULT && protectionItem(top.getItem(slot)))
+        return true;
+    return false;
+  }
+
+  // Los bloques protectores no sirven de ingrediente: si no, uno de netherite daría 9 lingotes. Se tapan la
+  // mesa de crafteo, el crafter, el yunque, la herrería, la piedra de afilar, el cortapiedras, el telar, la
+  // mesa de cartografía, los aldeanos y los hornos
   @EventHandler(priority = EventPriority.HIGHEST)
   public void prepareCraft(PrepareItemCraftEvent event) {
     if (anyProtectionItem(event.getInventory().getMatrix())) event.getInventory().setResult(null);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
-  public void craft(CraftItemEvent event) {
-    if (anyProtectionItem(event.getInventory().getMatrix())) event.setCancelled(true);
+  public void prepareResult(PrepareInventoryResultEvent event) {
+    if (protectionInput(event.getView())) event.setResult(null);
+  }
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void takeResult(InventoryClickEvent event) {
+    if (event.getSlotType() != InventoryType.SlotType.RESULT) return;
+    // Los hornos se tapan con smelt y burn; aquí solo se sacaría lo ya fundido
+    if (event.getView().getTopInventory() instanceof FurnaceInventory) return;
+    if (protectionInput(event.getView())) event.setCancelled(true);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
@@ -207,25 +227,17 @@ public final class ProtectionListener implements Listener {
         && anyProtectionItem(crafter.getInventory().getContents())) event.setCancelled(true);
   }
 
-  @EventHandler(priority = EventPriority.HIGHEST)
-  public void prepareResult(PrepareInventoryResultEvent event) {
-    if (anyProtectionItem(event.getInventory().getContents())) event.setResult(null);
-  }
-
-  @EventHandler(priority = EventPriority.HIGHEST)
-  public void takeResult(InventoryClickEvent event) {
-    if (event.getSlotType() != InventoryType.SlotType.RESULT) return;
-    if (anyProtectionItem(event.getView().getTopInventory().getContents())) event.setCancelled(true);
-  }
-
   @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void smelt(FurnaceSmeltEvent event) {
     if (protectionItem(event.getSource())) event.setCancelled(true);
   }
 
+  // Tampoco arde como combustible ni gasta combustible intentando fundir un bloque protector
   @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void burn(FurnaceBurnEvent event) {
-    if (protectionItem(event.getFuel())) event.setCancelled(true);
+    if (protectionItem(event.getFuel())
+        || event.getBlock().getState() instanceof org.bukkit.block.Furnace furnace
+            && protectionItem(furnace.getInventory().getSmelting())) event.setCancelled(true);
   }
 
   @EventHandler(ignoreCancelled = true)
