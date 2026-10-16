@@ -1,8 +1,12 @@
-# Cuando publicas una release en GitHub con tu cuenta, compila el plugin de esa etiqueta, ejecuta
-# las pruebas y adjunta el JAR. Si dejas la descripción vacía, añade las notas de CHANGELOG.md.
-name: Adjuntar JAR a la release
+# Al subir a la rama 2.0.0 una versión nueva del pom.xml que todavía no tiene release, compila, ejecuta las
+# pruebas y publica la release vX.Y.Z con el JAR y las notas de CHANGELOG.md desde la última release.
+# Si publicas una release a mano en GitHub, también le adjunta el JAR (y las notas si la dejas vacía).
+name: Publicar release
 
 on:
+  push:
+    branches: ['2.0.0']
+    paths: ['pom.xml', 'CHANGELOG.md', '.github/workflows/release.yml']
   release:
     types: [published]
 
@@ -10,7 +14,50 @@ permissions:
   contents: write
 
 jobs:
+  publicar:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Ver si la versión ya tiene release
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(mvn -q -B help:evaluate -Dexpression=project.version -DforceStdout)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "nueva=false" >> "$GITHUB_OUTPUT"
+            echo "La versión $VERSION ya tiene release."
+          else
+            echo "nueva=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Compilar y probar
+        if: steps.version.outputs.nueva == 'true'
+        run: mvn -B clean verify
+      - name: Publicar la release con el JAR
+        if: steps.version.outputs.nueva == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          ULTIMA=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName 2>/dev/null | sed 's/^v//')
+          # Todas las secciones del CHANGELOG desde la versión nueva hasta la última release publicada
+          awk -v desde="## $VERSION" -v hasta="## $ULTIMA" '
+            $0 == desde {found=1}
+            found && $0 == hasta {exit}
+            found' CHANGELOG.md > notas.md
+          gh release create "v$VERSION" "target/ViciontProtections-$VERSION.jar" \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "ViciontProtections $VERSION" --notes-file notas.md
+
   jar:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
