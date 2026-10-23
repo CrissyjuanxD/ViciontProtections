@@ -1,10 +1,10 @@
-# Validación de ViciontProtections 3.0.1
+# Validación de ViciontProtections 3.0.2
 
 Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contra la API de Spigot 1.21 con bytecode Java 21 y no usa clases NMS. La API de diálogos de Spigot 1.21.6+ se carga solo cuando el servidor la incluye.
 
 ## Pruebas automatizadas
 
-`mvn clean verify`: **28 pruebas**, sin fallos.
+`mvn clean verify`: **29 pruebas**, sin fallos.
 
 - Dimensiones exactas, bordes y límites inválidos.
 - Jerarquía de creador/propietario/miembro y permisos explícitos.
@@ -15,6 +15,7 @@ Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contr
 - Conversión de diálogos a la API de Spigot (formularios, opciones, confirmación y botones sin acción).
 - Correcciones de 2.0.3–2.0.5: permisos de usuario opcionales, un solo botón en los diálogos sin acciones y devolución del bloque al eliminar.
 - ESC cierra siempre: los botones de navegación pasan a la lista, el inferior solo cierra y las confirmaciones se convierten igual (también a la API de Spigot).
+- «◀ Volver» queda siempre el último botón, justo encima de «✖ Salir», y no llega al cliente como campo extra.
 - Clanes:
   - Rangos en español con y sin acentos, y un único líder por clan.
   - Permisos por defecto, cambios del líder y bloqueos del servidor.

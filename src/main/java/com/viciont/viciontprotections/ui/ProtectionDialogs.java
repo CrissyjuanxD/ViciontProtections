@@ -112,6 +112,13 @@ public class ProtectionDialogs {
     }
   }
 
+  /** Inicio de /prclan: tus protecciones, tus clanes y las guías. Las portadas vuelven aquí. */
+  public static final String HOME = "/prclan inicio";
+
+  private static final String BACK_HOME = "{suave}Inicio: tus protecciones, tus clanes y las guías";
+  // Botón «Volver» pendiente de colocar al final (ver back y escapeCloses)
+  static final String BACK = "viciont_volver";
+
   // ---------------------------------------------------------------- vistas
 
   List<String> guideLines() {
@@ -124,8 +131,6 @@ public class ProtectionDialogs {
     var dialog = base("Guía de protecciones");
     body(dialog, "{texto}Así funcionan las protecciones del servidor:");
     for (String line : messages.guideLines()) body(dialog, line);
-    if (back != null)
-      add(dialog, "{titulo}◀ {texto}Volver a " + back.name(), null, root(back) + "menu");
     if (player.hasPermission("viciontprotections.user.list"))
       add(dialog, "{titulo}۞ {texto}Mis protecciones", "{suave}Lista de tus protecciones", "/pr lista");
     for (String site : List.of("spigot", "modrinth")) {
@@ -141,12 +146,21 @@ public class ProtectionDialogs {
     }
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
-    dialog.add("exit_action", button("{texto}Cerrar", null, null));
+    if (back != null) back(dialog, root(back) + "menu", "{suave}Menú de " + back.name());
+    else back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 
   /** Menú principal de una protección; los botones dependen del rol del jugador. */
   public boolean menu(Player player, Protection p, String notice) {
+    return menu(player, p, notice, null);
+  }
+
+  /**
+   * Con {@code hub} (desde /prclan) el menú acaba con tus otras protecciones, tus clanes y las
+   * guías en vez de «Volver».
+   */
+  public boolean menu(Player player, Protection p, String notice, List<JsonObject> hub) {
     if (!supported(player)) return false;
     var dialog = base(p.name());
     notice(dialog, notice);
@@ -176,6 +190,7 @@ public class ProtectionDialogs {
       body(dialog, "{titulo}⚑ {texto}Territorio del clan {dato}" + clan + "{texto}: el acceso depende de los rangos del clan.");
     String root = root(p);
     boolean owner = p.isOwner(id);
+    add(dialog, "{titulo}۞ {texto}Guía de protecciones", "{suave}Cómo funciona todo", root + "guia");
     if (allows(player, p, Action.MEMBERS)) {
       add(dialog, "{acento}＋ {texto}Añadir miembro", "{suave}Puede construir y usar objetos", root + "formulario miembro");
       add(dialog, "{error}✖ {texto}Quitar miembro", "{suave}Elige a quién quitar", root + "miembros");
@@ -207,10 +222,8 @@ public class ProtectionDialogs {
       add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Rangos, chat, territorios y guerras", "/clan");
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
-    // La guía siempre queda al final de los botones; debajo, «Salir» (ver escapeCloses).
-    dialog.add(
-        "exit_action",
-        button("{titulo}۞ {texto}Guía de protecciones", null, root + "guia"));
+    if (hub != null) hub.forEach(dialog.getAsJsonArray("actions")::add);
+    else back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 
@@ -237,7 +250,7 @@ public class ProtectionDialogs {
                     "{suave}Quitar a " + ownerName(uuid),
                     root + kind + " quitar " + uuid + " " + FROM_DIALOG));
     add(dialog, "{acento}＋ {texto}Añadir " + kind, null, root + "formulario " + kind);
-    dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, root + "menu"));
+    back(dialog, root + "menu", "{suave}Menú de la protección");
     return show(player, dialog);
   }
 
@@ -258,10 +271,7 @@ public class ProtectionDialogs {
       body(dialog, "{suave}Banderas: {dato}" + String.join(", ", flags));
     }
     body(dialog, "{suave}ID: {dato}" + p.id());
-    add(dialog, "{titulo}◀ {texto}Volver al menú", null, root(p) + "menu");
-    if (player.hasPermission("viciontprotections.user.list"))
-      add(dialog, "{titulo}۞ {texto}Mis protecciones", null, "/pr lista");
-    dialog.add("exit_action", button("{titulo}۞ {texto}Guía de protecciones", null, root(p) + "guia"));
+    back(dialog, root(p) + "menu", "{suave}Menú de la protección");
     return show(player, dialog);
   }
 
@@ -299,10 +309,10 @@ public class ProtectionDialogs {
                 + place(p);
         add(dialog, "{dato}" + p.name(), tooltip, "/pr @" + p.id() + " menu");
       }
-      if (page > 1) add(dialog, "{titulo}◀ {texto}Anterior", null, base + (page - 1));
-      if (page < pages) add(dialog, "{texto}Siguiente {titulo}▶", null, base + (page + 1));
+      if (page > 1) add(dialog, "{suave}« {texto}Anterior", "{suave}Página " + (page - 1), base + (page - 1));
+      if (page < pages) add(dialog, "{texto}Siguiente {suave}»", "{suave}Página " + (page + 1), base + (page + 1));
     }
-    dialog.add("exit_action", button("{texto}Cerrar", null, null));
+    back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 
@@ -319,7 +329,7 @@ public class ProtectionDialogs {
       add(dialog, "{admin}☰ {texto}Todas las protecciones", null, "/pr lista todas");
     if (player.hasPermission("viciontprotections.admin.reload"))
       add(dialog, "{admin}⟳ {texto}Recargar ajustes", "{suave}config.yml y messages.yml", "/pr recargar " + FROM_DIALOG);
-    dialog.add("exit_action", button("{titulo}۞ {texto}Guía de protecciones", null, "/pr guia"));
+    back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 
@@ -360,7 +370,7 @@ public class ProtectionDialogs {
                         "{acento}＋ {dato}" + ownerName(uuid),
                         null,
                         root + operation + " añadir " + uuid + " " + FROM_DIALOG));
-        dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
+        back(dialog, back, null);
         return show(player, dialog);
       }
       case "nombre", "nombrar" -> {
@@ -375,9 +385,7 @@ public class ProtectionDialogs {
         body(dialog, "{suave}Hasta 48 letras, números, espacios, puntos, guiones o #.");
         text(dialog, "nombre", "Nombre", fresh ? "" : p.name(), 48);
         addDynamic(dialog, "{acento}✔ {texto}Guardar nombre", root + "nombre $(nombre) " + FROM_DIALOG);
-        dialog.add(
-            "exit_action",
-            button(fresh ? "{suave}Más tarde" : "{titulo}◀ {texto}Volver", null, fresh ? null : back));
+        back(dialog, back, fresh ? "{suave}Menú de tu protección nueva" : null);
         return show(player, dialog);
       }
       case "transferir" -> {
@@ -393,7 +401,7 @@ public class ProtectionDialogs {
             .forEach(
                 uuid ->
                     add(dialog, "{admin}⇄ {dato}" + ownerName(uuid), null, root + "transferir " + uuid + " " + FROM_DIALOG));
-        dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
+        back(dialog, back, null);
         return show(player, dialog);
       }
       case "bandera" -> {
@@ -424,7 +432,7 @@ public class ProtectionDialogs {
                 new String[] {"denegar", "Denegar"},
                 new String[] {"restablecer", "Restablecer"}));
         addDynamic(dialog, "{worldguard}⚑ {texto}Aplicar", root + "bandera $(bandera) $(valor) " + FROM_DIALOG);
-        dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
+        back(dialog, back, null);
         return show(player, dialog);
       }
       case "dar" -> {
@@ -450,7 +458,7 @@ public class ProtectionDialogs {
             "{admin}✦ {texto}Entregar",
             "/pr dar $(jugador) $(bloque) $(ancho) $(profundidad) $(altura) $(cantidad) $(tipo) "
                 + FROM_DIALOG);
-        dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
+        back(dialog, back, null);
         return show(player, dialog);
       }
       case "seleccion" -> {
@@ -460,7 +468,7 @@ public class ProtectionDialogs {
         text(dialog, "jugador", "Creador", player.getName(), 36);
         text(dialog, "nombre", "Nombre", "", 48);
         addDynamic(dialog, "{worldedit}✂ {texto}Proteger", "/pr seleccion $(jugador) $(nombre) " + FROM_DIALOG);
-        dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
+        back(dialog, back, null);
         return show(player, dialog);
       }
       default -> throw new IllegalArgumentException("Formulario desconocido.");
@@ -469,16 +477,12 @@ public class ProtectionDialogs {
 
   public boolean confirmDelete(Player player, Protection p) {
     if (!supported(player)) return false;
-    var dialog = new JsonObject();
-    dialog.addProperty("type", "minecraft:confirmation");
-    dialog.add("title", text("{titulo}۞ {texto}Eliminar protección"));
-    dialog.addProperty("can_close_with_escape", true);
-    dialog.add("body", new JsonArray());
+    var dialog = base("Eliminar protección");
     body(dialog, "{texto}¿Eliminar {dato}" + p.name() + "{texto}?");
     body(dialog, "{error}La zona dejará de estar protegida.");
     body(dialog, "{suave}El bloque protector se quita del suelo y vuelve a tu inventario.");
-    dialog.add("yes", button("{error}✘ Sí, eliminar", null, root(p) + "eliminar confirmar"));
-    dialog.add("no", button("{texto}Cancelar", null, root(p) + "menu"));
+    add(dialog, "{error}✘ {texto}Sí, eliminar", null, root(p) + "eliminar confirmar");
+    back(dialog, root(p) + "menu", "{suave}No eliminar");
     return show(player, dialog);
   }
 
@@ -604,8 +608,17 @@ public class ProtectionDialogs {
     dialog.add("actions", actions);
     if (dialog.has("exit_action") && dialog.getAsJsonObject("exit_action").has("action"))
       actions.add(dialog.remove("exit_action"));
+    if (dialog.has(BACK)) actions.add(dialog.remove(BACK));
     if (!dialog.has("exit_action") && !actions.isEmpty())
       dialog.add("exit_action", button("{suave}✖ {texto}Salir", null, null));
+  }
+
+  /**
+   * Página anterior: «◀ Volver» queda al final de los botones, justo encima de «✖ Salir», en todos
+   * los diálogos. Se añade al mostrarlo, así siempre es el último.
+   */
+  private static void back(JsonObject dialog, String command, String tooltip) {
+    dialog.add(BACK, button("{titulo}◀ {texto}Volver", tooltip, command));
   }
 
   private static String type(JsonObject dialog) {

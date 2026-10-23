@@ -23,7 +23,8 @@ public final class Screen {
   final List<Line> body = new ArrayList<>();
   final List<Button> buttons = new ArrayList<>();
   final List<Input> inputs = new ArrayList<>();
-  Button exit, yes, no;
+  /** Página a la que lleva «◀ Volver», justo encima de «✖ Salir»; nula en las portadas. */
+  Button back;
   int columns = 2;
   boolean plainTitle;
 
@@ -79,16 +80,16 @@ public final class Screen {
     return this;
   }
 
-  /** Botón inferior del diálogo; sin comando solo cierra. */
-  public Screen exit(String label, String command) {
-    exit = new Button(label, null, command, false, null);
-    return this;
+  /**
+   * Página anterior. Todas las pantallas acaban igual: sus botones, «◀ Volver» a esta página y, en
+   * el pie, «✖ Salir» (lo mismo que ESC), así nadie tiene que buscar cómo volver.
+   */
+  public Screen back(String command) {
+    return back(command, null);
   }
 
-  /** Convierte la pantalla en una confirmación de sí o no. */
-  public Screen confirm(String yesLabel, String yesCommand, String noLabel, String noCommand) {
-    yes = new Button(yesLabel, null, yesCommand, false, null);
-    no = new Button(noLabel, null, noCommand, false, null);
+  public Screen back(String command, String tooltip) {
+    back = new Button("{titulo}◀ {texto}Volver", tooltip, command, false, null);
     return this;
   }
 

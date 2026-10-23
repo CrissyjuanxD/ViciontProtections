@@ -28,6 +28,11 @@ public final class ClanViews {
   private static final int PAGE = 10;
   private static final String D = " " + FROM_DIALOG;
   private static final Screen.Button CLOSE = new Screen.Button("{suave}✖ {texto}Salir", null, null, false, null);
+  /** Página de inicio de /prclan: el «Volver» de las portadas de /pr y /clan. */
+  private static final String HOME = ProtectionDialogs.HOME;
+  private static final String BACK_HOME = "{suave}Inicio: tus protecciones, tus clanes y las guías";
+  /** Protecciones que /prclan muestra como botones; el resto, en «Todas mis protecciones». */
+  private static final int HUB_PROTECTIONS = 6;
 
   private final ClanManager manager;
   private final ClanMessages messages;
@@ -78,78 +83,126 @@ public final class ClanViews {
                           + " te invita como " + settings.rankName(invite.rank()),
                       "/clan invitacion @" + clan.id()));
     screen.button("{titulo}☰ {texto}Clanes del servidor", "{suave}Lista de clanes", "/clan lista");
-    screen.button("{titulo}۞ {texto}Guía de protecciones", "{suave}Tus protecciones personales", "/pr guia");
     if (hasAdmin(player)) screen.button("{admin}✦ {texto}Administración", "{suave}Gestionar cualquier clan", "/clan admin");
+    screen.back(HOME, BACK_HOME);
     show(player, screen);
   }
 
   /**
-   * /prclan: las guías de protecciones y de clanes en la misma página, con tus protecciones y tu
-   * clan. La parte de protecciones lleva la paleta morada y rosa de messages.yml.
+   * /prclan. Si estás en un territorio de tu clan o en una protección a la que tienes acceso, abre
+   * su menú y añade al final tus otras protecciones, tus clanes y las guías; si no, el inicio.
+   */
+  public void hub(CommandSender sender) {
+    if (sender instanceof Player player) {
+      Protection here = standingIn(player);
+      Clan clan = here == null ? null : ownTerritory(player, here);
+      if (clan != null) {
+        // El menú del clan ya empieza con su guía: al final solo va la de protecciones
+        menu(player, clan, null, hubButtons(player, here, clan, true, false));
+        return;
+      }
+      if (here != null) {
+        List<JsonObject> extras = new ArrayList<>();
+        // El menú de la protección ya empieza con su guía: al final solo va la de clanes
+        for (Screen.Button button : hubButtons(player, here, null, false, true)) extras.add(button(button));
+        if (dialogs.menu(player, here, null, extras)) return;
+      }
+    }
+    home(sender, null);
+  }
+
+  /**
+   * Inicio de /prclan: tus protecciones y tus clanes para abrir su menú, y las dos guías. Es la
+   * página a la que vuelven las portadas de /pr y /clan.
    */
   public void home(CommandSender sender, String notice) {
-    Player player = sender instanceof Player online ? online : null;
-    UUID id = player == null ? null : player.getUniqueId();
     Screen screen =
         new Screen("{titulo}۞ <gradient:#C29BFF:#F5A8D6>Protecciones</gradient> {suave}y <gradient:#FFE08A:#FFA94D>clanes</gradient>")
             .plainTitle()
             .notice(notice);
-    screen.raw(Messages.color("{titulo}۞ <gradient:#C29BFF:#F5A8D6>Viciont Protections</gradient>"));
-    for (String line : dialogs.guideLines()) screen.raw(Messages.color(line));
-    var protections = manager.protections();
-    List<Protection> mine = id == null ? List.of() : protections.getProtections(id);
-    Protection here =
-        player == null
-            ? null
-            : protections.getProtectionAt(player.getLocation())
-                .filter(p -> p.canAccess(id) || player.hasPermission("viciontprotections.admin.manage"))
-                .orElse(null);
-    if (player != null)
-      screen.raw(Messages.color(mine.isEmpty()
-          ? "{suave}Aún no tienes protecciones."
-          : "{texto}Tienes acceso a {dato}" + mine.size() + (mine.size() == 1 ? " {texto}protección." : " {texto}protecciones.")));
-    if (here != null)
-      screen.button(Messages.color("{titulo}۞ {texto}Esta protección: {dato}" + here.name()),
-          Messages.color("{suave}Menú de la protección donde estás"), "/pr @" + here.id() + " menu");
-    if (player != null && player.hasPermission("viciontprotections.user.list"))
-      screen.button(Messages.color("{titulo}☰ {texto}Mis protecciones"), Messages.color("{suave}Pulsa una para abrir su menú"), "/pr lista");
-    screen.button(Messages.color("{titulo}۞ {texto}Guía de protecciones"), Messages.color("{suave}Enlaces y administración"), "/pr guia");
-
-    if (settings.enabled()) {
-      screen.line("{titulo}⚑ <gradient:#FFE08A:#FFA94D>Viciont Clans</gradient>");
-      for (String line : settings.guideIntro()) screen.line(settings.guideValues(line));
-      boolean clans = player != null && player.hasPermission("viciontprotections.clan.use");
-      Clan clan = id == null ? null : manager.getPlayerClan(id).orElse(null);
-      if (clan != null) {
-        screen.line("{texto}Tu clan: " + paint(clan) + " {suave}· Tu rango: {dato}" + clan.rank(id).map(settings::rankName).orElse(""));
-        if (clans) screen.button("{titulo}⚑ {texto}Menú de " + paint(clan), "{suave}Rangos, chat, territorios y guerras", "/clan");
-      } else if (player != null) {
-        for (ClanBackup copy : manager.backupsOf(id))
-          screen.line("{titulo}↺ {texto}Puedes recuperar " + paint(copy.clan()) + " {texto}colocando un bloque de clan durante {dato}"
-              + ClanWars.duration(copy.dissolvedAt() + settings.backupMillis() - System.currentTimeMillis()) + "{texto}.");
-        List<ClanRequest> invites = manager.invitations(id);
-        screen.line(invites.isEmpty()
-            ? "{suave}No perteneces a ningún clan. Funda uno con un {dato}bloque de clan {suave}o pide que te inviten."
-            : "{texto}Tienes {dato}" + invites.size() + (invites.size() == 1 ? " invitación" : " invitaciones") + " {texto}a un clan.");
-        if (clans && founding != null && founding.draft(id).filter(d -> d.clan() == null).isPresent())
-          screen.button("{acento}⚑ {texto}Fundar mi clan", "{suave}Elige nombre y color o recupera uno anterior", "/clan fundar");
-        if (clans)
-          for (ClanRequest invite : invites)
-            manager.getClan(invite.clan())
-                .ifPresent(c -> screen.button("{acento}✉ " + paint(c), "{texto}Te invitan como " + settings.rankName(invite.rank()), "/clan invitacion @" + c.id()));
-      }
-      List<ClanSettings.Topic> topics = new ArrayList<>(settings.topics());
-      topics.addAll(manager.extensionTopics());
-      for (ClanSettings.Topic topic : topics)
-        screen.button("{titulo}" + topic.icon() + " {texto}" + topic.title(), "{suave}Guía de clanes", "/clan guia " + topic.key());
-      screen.button("{titulo}☰ {texto}Comandos de clanes", null, "/clan guia comandos");
-      if (clans) screen.button("{titulo}☰ {texto}Clanes del servidor", null, "/clan lista");
+    if (!(sender instanceof Player player)) {
+      screen.line("{texto}Guías de protecciones ({dato}/pr guia{texto}) y de clanes ({dato}/clan guia{texto}).");
+      screen.button(Messages.color("{titulo}۞ {texto}Guía de protecciones"), null, "/pr guia");
+      if (settings.enabled()) screen.button("{titulo}⚑ {texto}Guía de clanes", null, "/clan guia");
+      show(sender, screen);
+      return;
     }
-    if (player != null && ProtectionDialogs.hasAdmin(player))
+    UUID id = player.getUniqueId();
+    Protection here = standingIn(player);
+    Clan hereClan = here == null ? null : ownTerritory(player, here);
+    screen.line("{texto}Pulsa una protección o un clan para abrir su menú. Abajo están las guías.");
+    if (here != null)
+      screen.line("{texto}Estás en " + (hereClan != null ? "el territorio de " + paint(hereClan) : Messages.color("{dato}" + here.name())) + "{texto}.");
+    int count = manager.protections().getProtections(id).size();
+    Clan clan = manager.getPlayerClan(id).orElse(null);
+    screen.line("{suave}Protecciones: {dato}" + count
+        + (settings.enabled() ? " {suave}· Clan: " + (clan == null ? "{dato}ninguno" : paint(clan)) : ""));
+    if (hereClan != null)
+      screen.button("{titulo}⚑ {texto}Aquí: " + paint(hereClan), "{suave}Menú del clan del territorio donde estás", "/clan");
+    else if (here != null)
+      screen.button(Messages.color("{titulo}۞ {texto}Aquí: {dato}" + here.name()), Messages.color(tooltip(here, id)), "/pr @" + here.id() + " menu");
+    screen.buttons.addAll(hubButtons(player, here, hereClan, true, true));
+    if (ProtectionDialogs.hasAdmin(player))
       screen.button(Messages.color("{admin}✦ {texto}Administración de protecciones"), null, "/pr admin");
-    if (player != null && hasAdmin(player))
-      screen.button("{admin}✦ {texto}Administración de clanes", null, "/clan admin");
-    show(sender, screen);
+    if (hasAdmin(player)) screen.button("{admin}✦ {texto}Administración de clanes", null, "/clan admin");
+    show(player, screen);
+  }
+
+  /** Tus protecciones (menos la de {@code here}), tus clanes (menos {@code hereClan}) y las guías pedidas. */
+  private List<Screen.Button> hubButtons(
+      Player player, Protection here, Clan hereClan, boolean protectionGuide, boolean clanGuide) {
+    UUID id = player.getUniqueId();
+    List<Screen.Button> list = new ArrayList<>();
+    List<Protection> others =
+        manager.protections().getProtections(id).stream()
+            .filter(p -> here == null || !p.id().equals(here.id()))
+            .toList();
+    int shown = Math.min(others.size(), HUB_PROTECTIONS);
+    for (Protection p : others.subList(0, shown))
+      list.add(new Screen.Button(
+          Messages.color((manager.territoryClan(p.id()).isPresent() ? "{titulo}⚑ " : "{titulo}۞ ") + "{dato}" + p.name()),
+          Messages.color(tooltip(p, id)), "/pr @" + p.id() + " menu", false, null));
+    if (others.size() > shown)
+      list.add(new Screen.Button(Messages.color("{titulo}☰ {texto}Todas mis protecciones"), Messages.color("{suave}Lista completa"), "/pr lista", false, null));
+    if (settings.enabled() && player.hasPermission("viciontprotections.clan.use")) {
+      List<Clan> clans = manager.getPlayerClans(id);
+      Clan active = manager.getPlayerClan(id).orElse(null);
+      for (Clan clan : clans) {
+        if (hereClan != null && clan.id().equals(hereClan.id())) continue;
+        list.add(new Screen.Button("{titulo}⚑ " + paint(clan),
+            "{texto}Tu rango: {dato}" + clan.rank(id).map(settings::rankName).orElse("") + "\n{suave}Menú del clan",
+            clan.equals(active) ? "/clan" : "/clan activo @" + clan.id(), false, null));
+      }
+      if (clans.isEmpty()) {
+        int invites = manager.invitations(id).size();
+        list.add(new Screen.Button("{titulo}⚑ {texto}Clanes" + (invites > 0 ? " {acento}(" + invites + (invites == 1 ? " invitación)" : " invitaciones)") : ""),
+            "{suave}Fundar un clan, invitaciones y clanes del servidor", "/clan", false, null));
+      }
+    }
+    if (protectionGuide)
+      list.add(new Screen.Button(Messages.color("{titulo}۞ {texto}Guía de protecciones"), Messages.color("{suave}Cómo proteger tu zona"), "/pr guia", false, null));
+    if (clanGuide && settings.enabled())
+      list.add(new Screen.Button("{titulo}⚑ {texto}Guía de clanes", "{suave}Cómo funcionan los clanes, por temas", "/clan guia", false, null));
+    return list;
+  }
+
+  /** Protección donde está el jugador, si puede usar su menú. */
+  private Protection standingIn(Player player) {
+    UUID id = player.getUniqueId();
+    return manager.protections().getProtectionAt(player.getLocation())
+        .filter(p -> p.canAccess(id) || player.hasPermission("viciontprotections.admin.manage"))
+        .orElse(null);
+  }
+
+  /** El clan del jugador dueño de esa protección, si es territorio suyo. */
+  private Clan ownTerritory(Player player, Protection protection) {
+    if (!settings.enabled()) return null;
+    return manager.territoryClan(protection.id()).filter(c -> c.isMember(player.getUniqueId())).orElse(null);
+  }
+
+  private static String tooltip(Protection p, UUID viewer) {
+    return "{texto}" + p.name() + "\n{suave}Rol: {dato}" + ProtectionDialogs.role(p, viewer)
+        + "\n{suave}Tamaño: {dato}" + ProtectionDialogs.size(p) + "\n{suave}" + ProtectionDialogs.place(p);
   }
 
   /** Portada de la guía con un botón por tema, o la página de un tema. */
@@ -163,15 +216,14 @@ public final class ClanViews {
         screen.button("{titulo}" + t.icon() + " {texto}" + t.title(), null, "/clan guia " + t.key());
       screen.button("{titulo}☰ {texto}Comandos", "{suave}Todo lo que puedes escribir", "/clan guia comandos");
       screen.button("{titulo}۞ {texto}Protecciones", "{suave}Guía de las protecciones personales", "/pr guia");
-      screen.exit("{titulo}◀ {texto}Menú del clan", "/clan");
+      screen.back("/clan", "{suave}Menú del clan");
       show(sender, screen);
       return;
     }
     if (topic.equalsIgnoreCase("comandos")) {
       Screen screen = new Screen("Guía · Comandos");
       for (String[] command : commands(sender)) screen.line("{dato}" + command[0] + " {suave}» {texto}" + command[1]);
-      screen.button("{titulo}◀ {texto}Temas de la guía", null, "/clan guia");
-      screen.exit("{titulo}۞ {texto}Menú del clan", "/clan");
+      screen.back("/clan guia", "{suave}Temas de la guía");
       show(sender, screen);
       return;
     }
@@ -184,11 +236,11 @@ public final class ClanViews {
     ClanSettings.Topic page = topics.get(index);
     Screen screen = new Screen("Guía · " + page.title());
     for (String line : page.lines()) screen.line(settings.guideValues(line));
-    if (index > 0) screen.button("{titulo}◀ {texto}" + topics.get(index - 1).title(), null, "/clan guia " + topics.get(index - 1).key());
+    if (index > 0)
+      screen.button("{suave}« {texto}" + topics.get(index - 1).title(), "{suave}Tema anterior", "/clan guia " + topics.get(index - 1).key());
     if (index + 1 < topics.size())
-      screen.button("{texto}" + topics.get(index + 1).title() + " {titulo}▶", null, "/clan guia " + topics.get(index + 1).key());
-    screen.button("{titulo}☰ {texto}Temas de la guía", null, "/clan guia");
-    screen.exit("{titulo}۞ {texto}Menú del clan", "/clan");
+      screen.button("{texto}" + topics.get(index + 1).title() + " {suave}»", "{suave}Tema siguiente", "/clan guia " + topics.get(index + 1).key());
+    screen.back("/clan guia", "{suave}Temas de la guía");
     show(sender, screen);
   }
 
@@ -240,9 +292,9 @@ public final class ClanViews {
               + "\n{texto}Territorios: {dato}" + clan.territories().size()
               + manager.wars().active(clan.id()).map(w -> "\n{guerra}⚔ En guerra con " + w.nameOf(w.enemyOf(clan.id()))).orElse(""),
           "/clan info @" + clan.id());
-    if (page > 1) screen.button("{titulo}◀ {texto}Anterior", null, "/clan lista " + (page - 1));
-    if (page < pages) screen.button("{texto}Siguiente {titulo}▶", null, "/clan lista " + (page + 1));
-    screen.exit("{titulo}۞ {texto}Guía de clanes", "/clan guia");
+    if (page > 1) screen.button("{suave}« {texto}Anterior", "{suave}Página " + (page - 1), "/clan lista " + (page - 1));
+    if (page < pages) screen.button("{texto}Siguiente {suave}»", "{suave}Página " + (page + 1), "/clan lista " + (page + 1));
+    screen.back("/clan", "{suave}Menú del clan");
     show(sender, screen);
   }
 
@@ -259,16 +311,18 @@ public final class ClanViews {
       screen.line("{titulo}Crónica de guerras:");
       for (ClanWar war : history) screen.line(" {suave}• " + summary(clan, war));
     }
-    if (sender instanceof Player player && clan.isMember(player.getUniqueId()))
-      screen.button("{titulo}۞ {texto}Menú del clan", null, "/clan");
-    screen.button("{titulo}☰ {texto}Clanes del servidor", null, "/clan lista");
-    screen.exit("{texto}Cerrar", null);
+    screen.back("/clan lista", "{suave}Clanes del servidor");
     show(sender, screen);
   }
 
   // ================================================================== menú del clan
 
   public void menu(Player player, Clan clan, String notice) {
+    menu(player, clan, notice, null);
+  }
+
+  /** Con {@code hub} (desde /prclan) acaba con tus otras protecciones, tus clanes y las guías. */
+  public void menu(Player player, Clan clan, String notice, List<Screen.Button> hub) {
     UUID id = player.getUniqueId();
     ClanRank rank = clan.rank(id).orElse(null);
     if (rank == null) {
@@ -308,6 +362,8 @@ public final class ClanViews {
     if (rank != ClanRank.LEADER) screen.button("{error}↩ {texto}Salir del clan", "{suave}Pide confirmación", "/clan salir");
     screen.button("{titulo}☰ {texto}Clanes del servidor", null, "/clan lista");
     if (hasAdmin(player)) screen.button("{admin}✦ {texto}Administración", "{suave}Gestionar cualquier clan", "/clan admin");
+    if (hub != null) screen.buttons.addAll(hub);
+    else screen.back(HOME, BACK_HOME);
     show(player, screen);
   }
 
@@ -330,7 +386,7 @@ public final class ClanViews {
         mode ? "{acento}● {texto}Modo clan: activado" : "{suave}○ {texto}Modo clan: desactivado",
         "{suave}Con el modo clan, todo lo que escribes va al clan",
         "/clan modo" + D);
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -355,7 +411,7 @@ public final class ClanViews {
             member.player().equals(id) ? "/clan miembros" : "/clan miembro " + member.player());
       }
     if (manager.allows(clan, id, "invitar")) screen.button("{acento}✉ {texto}Invitar", null, "/clan formulario invitar");
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -381,7 +437,7 @@ public final class ClanViews {
     if (own == ClanRank.LEADER)
       screen.button("{admin}⇄ {texto}Hacer líder", "{suave}Pide confirmación; tú pasas a sublíder", "/clan transferir " + target);
     if (!screen.hasButtons()) screen.line("{suave}Tu rango no permite gestionar a este miembro.");
-    screen.exit("{titulo}◀ {texto}Miembros", "/clan miembros");
+    screen.back("/clan miembros", "{suave}Miembros");
     show(player, screen);
   }
 
@@ -404,7 +460,7 @@ public final class ClanViews {
       quick++;
       screen.button("{acento}✉ {dato}" + online.getName(), "{texto}Invitar como " + settings.rankName(initial), "/clan invitar " + online.getName() + " " + initial.key() + D);
     }
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -415,7 +471,9 @@ public final class ClanViews {
         + " {texto}te invita al clan " + paint(clan) + " {texto}como {dato}" + settings.rankName(invite.rank()) + "{texto}.");
     screen.line("{texto}Líder: {dato}" + ClanManager.name(clan.leader()) + " {suave}· Miembros: {dato}" + clan.members().size() + " {suave}· Territorios: {dato}" + clan.territories().size());
     screen.line("{suave}Caduca en " + ClanWars.duration(invite.expiresAt() - System.currentTimeMillis()) + ". Tus protecciones seguirán siendo privadas.");
-    screen.confirm("{acento}✔ Aceptar", "/clan aceptar @" + clan.id(), "{error}✖ Rechazar", "/clan rechazar @" + clan.id());
+    screen.button("{acento}✔ {texto}Aceptar", "{suave}Entras al clan", "/clan aceptar @" + clan.id());
+    screen.button("{error}✖ {texto}Rechazar", "{suave}La invitación se borra", "/clan rechazar @" + clan.id());
+    screen.back("/clan", "{suave}Portada de clanes");
     show(player, screen);
   }
 
@@ -452,7 +510,7 @@ public final class ClanViews {
       screen.button("{acento}⌂ {texto}Aportar protección", "{suave}La protección donde estás", "/clan territorio aportar");
     if (manager.allows(clan, player.getUniqueId(), "limites"))
       screen.button("{titulo}◈ {texto}Mostrar límites", "{suave}Del territorio donde estás o del principal", "/clan limites" + D);
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -469,7 +527,8 @@ public final class ClanViews {
     boolean direct = manager.allows(clan, player.getUniqueId(), "territorios");
     screen.line(direct ? "{suave}Pasa al clan en cuanto confirmes." : "{suave}Tu rango envía una solicitud; la acepta el líder o un sublíder.");
     screen.line("{suave}Si el clan se disuelve o te la devuelve, vuelve a ser tuya con su acceso anterior.");
-    screen.confirm(direct ? "{acento}✔ Aportar" : "{acento}✉ Enviar solicitud", "/clan territorio aportar confirmar" + D, "{texto}Cancelar", "/clan");
+    screen.button(direct ? "{acento}✔ {texto}Aportar" : "{acento}✉ {texto}Enviar solicitud", null, "/clan territorio aportar confirmar" + D);
+    screen.back("/clan", "{suave}No aportar y volver al menú del clan");
     show(player, screen);
   }
 
@@ -486,7 +545,7 @@ public final class ClanViews {
       screen.button("{acento}✔ {texto}Aceptar " + p.name(), "{suave}De " + ClanManager.name(request.player()), "/clan territorio aceptar " + request.id() + D);
       screen.button("{error}✖ {texto}Rechazar " + p.name(), null, "/clan territorio rechazar " + request.id() + D);
     }
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -501,7 +560,7 @@ public final class ClanViews {
         long allowed = manager.getPermissions().stream().filter(p -> manager.allows(clan, r, p.key())).count();
         screen.button("{titulo}♛ {texto}" + settings.rankName(r) + " {suave}(" + allowed + "/" + manager.getPermissions().size() + ")", null, "/clan permisos " + r.key());
       }
-      screen.exit("{titulo}◀ {texto}Volver", "/clan");
+      screen.back("/clan", "{suave}Menú del clan");
       show(player, screen);
       return;
     }
@@ -518,7 +577,7 @@ public final class ClanViews {
           "{suave}" + permission.description(), "/clan permisos " + rank.key() + " " + permission.key() + D);
     }
     if (!fixed.isEmpty()) screen.line("{suave}Fijadas por el servidor: {dato}" + String.join("{suave}, {dato}", fixed));
-    screen.exit("{titulo}◀ {texto}Rangos", "/clan permisos");
+    screen.back("/clan permisos", "{suave}Elegir otro rango");
     show(player, screen);
   }
 
@@ -541,7 +600,7 @@ public final class ClanViews {
       screen.button("{admin}⇄ {texto}Transferir liderazgo", "{suave}Tú pasas a sublíder", "/clan formulario transferir");
       screen.button("{error}✘ {texto}Disolver el clan", "{suave}Pide confirmación", "/clan disolver");
     }
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -632,7 +691,7 @@ public final class ClanViews {
         return false;
       }
     }
-    screen.exit("{titulo}◀ {texto}Volver", back);
+    screen.back(back);
     show(player, screen);
     return true;
   }
@@ -666,7 +725,7 @@ public final class ClanViews {
     screen.line("{suave}Al recuperarlo vuelven los miembros que no se hayan unido a otro clan. Las protecciones aportadas ya volvieron a sus dueños: pueden aportarlas otra vez.");
     screen.button("{titulo}⚑ {texto}Fundar un clan nuevo", "{suave}Con otro nombre y color", "/clan fundar nuevo");
     screen.button("{error}✖ {texto}Recuperar el bloque", "{suave}Lo devuelve a tu inventario", "/clan fundar cancelar");
-    screen.exit("{suave}Más tarde", null);
+    screen.back("/clan", "{suave}Portada de clanes; el bloque sigue esperando unos minutos");
     show(player, screen);
   }
 
@@ -685,7 +744,7 @@ public final class ClanViews {
     screen.options("color", "Color", colorOptions(""));
     screen.submit("{acento}⚑ {texto}Fundar clan", "/clan fundar $(color) $(nombre)" + D, "/clan fundar " + settings.colors().keySet().iterator().next() + " ");
     screen.button("{error}✖ {texto}Recuperar el bloque", "{suave}Cancela la fundación", "/clan fundar cancelar");
-    screen.exit("{suave}Más tarde", null);
+    screen.back("/clan", "{suave}Portada de clanes; el bloque sigue esperando unos minutos");
     show(player, screen);
   }
 
@@ -702,7 +761,7 @@ public final class ClanViews {
     screen.line("{texto}El territorio pasa a medir lo del bloque nuevo y el bloque actual vuelve a tu inventario.");
     screen.line("{suave}El clan no se disuelve: rangos, chat, guerras, banco y protecciones aportadas siguen igual.");
     screen.line("{error}No rompas el bloque actual: romperlo disuelve el clan.");
-    screen.exit("{titulo}◀ {texto}Ajustes", "/clan ajustes");
+    screen.back("/clan ajustes", "{suave}Ajustes del clan");
     show(player, screen);
   }
 
@@ -730,7 +789,8 @@ public final class ClanViews {
             + draft.block().getBlockZ() + ")",
         "{texto}La zona se centra en el bloque nuevo.\n{error}Lo que quede fuera deja de estar protegido.",
         "/clan bloque confirmar" + D);
-    screen.exit("{texto}Cancelar", "/clan bloque cancelar");
+    screen.button("{error}✖ {texto}Cancelar el cambio", "{suave}El bloque nuevo vuelve a tu inventario", "/clan bloque cancelar");
+    screen.back("/clan ajustes", "{suave}Ajustes del clan; el cambio sigue pendiente unos minutos");
     show(player, screen);
   }
 
@@ -769,7 +829,7 @@ public final class ClanViews {
       screen.line("{titulo}Crónica:");
       for (ClanWar past : history) screen.line(" {suave}• " + summary(clan, past));
     }
-    screen.exit("{titulo}◀ {texto}Volver", "/clan");
+    screen.back("/clan", "{suave}Menú del clan");
     show(player, screen);
   }
 
@@ -803,7 +863,8 @@ public final class ClanViews {
     screen.line("{error}El territorio principal deja de estar protegido. {texto}El bloque de clan vuelve a tu inventario.");
     screen.line("{texto}Las protecciones aportadas vuelven a quien las aportó. Todos los miembros quedan sin clan.");
     screen.line("{suave}Lo guardado por plugins conectados, como el saldo del banco, se pierde.");
-    screen.confirm("{error}✘ Sí, disolver", "/clan disolver confirmar", "{texto}Cancelar", "/clan");
+    screen.button("{error}✘ {texto}Sí, disolver", null, "/clan disolver confirmar");
+    screen.back("/clan ajustes", "{suave}No disolver");
     show(player, screen);
   }
 
@@ -811,7 +872,8 @@ public final class ClanViews {
     Screen screen = new Screen("Salir del clan");
     screen.line("{texto}¿Salir de " + paint(clan) + "{texto}? Perderás el acceso a sus territorios.");
     screen.line("{suave}Tus protecciones personales siguen siendo tuyas; las que aportaste se quedan en el clan.");
-    screen.confirm("{error}↩ Sí, salir", "/clan salir confirmar", "{texto}Cancelar", "/clan");
+    screen.button("{error}↩ {texto}Sí, salir del clan", null, "/clan salir confirmar");
+    screen.back("/clan", "{suave}Quedarte en el clan");
     show(player, screen);
   }
 
@@ -819,7 +881,8 @@ public final class ClanViews {
     Screen screen = new Screen("Transferir liderazgo");
     screen.line("{texto}¿Hacer líder de " + paint(clan) + " {texto}a {dato}" + ClanManager.name(target) + "{texto}?");
     screen.line("{texto}Tú pasarás a {dato}" + settings.rankName(ClanRank.CO_LEADER) + "{texto}. Solo el nuevo líder podrá devolvértelo.");
-    screen.confirm("{admin}⇄ Sí, transferir", "/clan transferir " + target + " confirmar", "{texto}Cancelar", "/clan miembros");
+    screen.button("{admin}⇄ {texto}Sí, transferir", null, "/clan transferir " + target + " confirmar");
+    screen.back("/clan miembros", "{suave}No transferir");
     show(player, screen);
   }
 
@@ -833,7 +896,7 @@ public final class ClanViews {
         screen.button(paint(other), "{texto}" + other.members().size() + " miembros", "/clan admin @" + other.id());
       if (player.hasPermission("viciontprotections.admin.clan.spy"))
         screen.button("{admin}◉ {texto}Espiar chats de clan", "{suave}Activa o desactiva", "/clan espiar" + D);
-      screen.exit("{titulo}۞ {texto}Guía de clanes", "/clan guia");
+      screen.back("/clan", "{suave}Menú del clan");
       show(player, screen);
       return;
     }
@@ -858,7 +921,7 @@ public final class ClanViews {
     if (manager.wars().active(clan.id()).isPresent() && player.hasPermission("viciontprotections.admin.clan.war"))
       screen.button("{guerra}⚔ {texto}Terminar su guerra", "{suave}Sin vencedor", "/clan admin guerra terminar @" + clan.id() + D);
     screen.button("{error}✘ {texto}Disolver", "{suave}Pide confirmación", root + "disolver");
-    screen.exit("{titulo}◀ {texto}Clanes", "/clan admin");
+    screen.back("/clan admin", "{suave}Lista de clanes");
     show(player, screen);
   }
 
@@ -866,7 +929,8 @@ public final class ClanViews {
     Screen screen = new Screen("Disolver (administración)");
     screen.line("{texto}¿Disolver " + paint(clan) + "{texto}? El bloque de clan no se devuelve a nadie.");
     screen.line("{texto}Las protecciones aportadas vuelven a sus dueños y los miembros quedan sin clan.");
-    screen.confirm("{error}✘ Sí, disolver", "/clan admin @" + clan.id() + " disolver confirmar", "{texto}Cancelar", "/clan admin @" + clan.id());
+    screen.button("{error}✘ {texto}Sí, disolver", null, "/clan admin @" + clan.id() + " disolver confirmar");
+    screen.back("/clan admin @" + clan.id(), "{suave}No disolver");
     show(player, screen);
   }
 
@@ -880,8 +944,6 @@ public final class ClanViews {
 
   private JsonObject dialog(Screen screen) {
     var dialog = new JsonObject();
-    boolean confirmation = screen.yes != null;
-    // Las confirmaciones también son de varias acciones: así ESC cierra en vez de pulsar «no»
     dialog.addProperty("type", "minecraft:multi_action");
     dialog.add(
         "title",
@@ -925,22 +987,14 @@ public final class ClanViews {
       }
       dialog.add("inputs", inputs);
     }
-    dialog.addProperty("columns", confirmation ? 2 : screen.columns);
+    dialog.addProperty("columns", screen.columns);
     var actions = new JsonArray();
-    if (confirmation) {
-      actions.add(button(screen.yes));
-      actions.add(button(screen.no));
-    }
     for (Screen.Button button : screen.buttons) actions.add(button(button));
-    // ESC ejecuta el botón inferior: el que navega (volver, guía...) pasa a la lista y abajo queda
-    // uno que solo cierra, para salir del menú desde cualquier página
-    Screen.Button exit = screen.exit;
-    if (exit != null && exit.command() != null) {
-      actions.add(button(exit));
-      exit = null;
-    }
-    if (actions.isEmpty()) actions.add(button(exit != null ? exit : CLOSE));
-    else dialog.add("exit_action", button(exit != null ? exit : CLOSE));
+    // Siempre igual: los botones de la página, «◀ Volver» y, en el pie, «✖ Salir». ESC ejecuta el
+    // botón del pie, así que cierra el menú desde cualquier página en vez de ir hacia atrás
+    if (screen.back != null) actions.add(button(screen.back));
+    if (actions.isEmpty()) actions.add(button(CLOSE));
+    else dialog.add("exit_action", button(CLOSE));
     dialog.add("actions", actions);
     return dialog;
   }
@@ -983,11 +1037,7 @@ public final class ClanViews {
         messages.line(sender, "{suave}" + input.label() + ": {dato}"
             + String.join("{suave}, {dato}", input.options().stream().map(ClanViews::typed).toList()));
     List<Screen.Button> buttons = new ArrayList<>(screen.buttons);
-    if (screen.yes != null) {
-      buttons.add(screen.yes);
-      buttons.add(screen.no);
-    }
-    if (screen.exit != null && screen.exit.command() != null) buttons.add(screen.exit);
+    if (screen.back != null) buttons.add(screen.back);
     List<BaseComponent> row = new ArrayList<>();
     int count = 0;
     for (Screen.Button button : buttons) {

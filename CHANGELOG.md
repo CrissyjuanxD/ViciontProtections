@@ -1,5 +1,15 @@
 # Cambios
 
+## 3.0.2
+
+### Menús más claros
+
+- Todas las páginas acaban igual: sus botones, **◀ Volver** a la página anterior y, abajo del todo, **✖ Salir**. Se quitan los botones que hacían de «volver» con otros nombres, como «Rangos» en los permisos, «Temas de la guía» o «Menú del clan» en la guía, y «Cancelar» en las confirmaciones.
+- `/prclan` ya no copia la guía de protecciones. Si estás en una protección tuya o en un territorio de tu clan, abre su menú y añade al final tus otras protecciones, tus clanes y las guías. Si no, muestra el panel de inicio con todo eso. `/prclan inicio` abre siempre el panel.
+- El «Volver» del menú de protección, del menú del clan, de las guías y de las listas lleva al panel de inicio.
+- El menú de protección empieza con el botón **Guía de protecciones**, igual que el del clan con su guía.
+- Las páginas de las listas y de la guía usan «« Anterior» y «Siguiente »», para no confundirlas con «Volver».
+
 ## 3.0.1
 
 ### Novedades

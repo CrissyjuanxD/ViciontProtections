@@ -145,4 +145,28 @@ class UiTest {
     assertEquals(1, list.getAsJsonArray("actions").size());
     assertEquals("Cerrar", list.getAsJsonObject("exit_action").getAsJsonObject("label").get("text").getAsString());
   }
+
+  @Test
+  void backButtonGoesLastRightAboveExit() {
+    JsonObject page =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:multi_action","title":{"text":"Miembros"},"body":[],
+                 "actions":[{"label":{"text":"Alex"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x miembro quitar Alex"}}]}
+                """)
+            .getAsJsonObject();
+    page.add(
+        ProtectionDialogs.BACK,
+        JsonParser.parseString(
+                """
+                {"label":{"text":"Volver"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x menu"}}
+                """)
+            .getAsJsonObject());
+    ProtectionDialogs.escapeCloses(page);
+    var actions = page.getAsJsonArray("actions");
+    assertEquals(2, actions.size());
+    assertEquals("/pr @x menu", actions.get(1).getAsJsonObject().getAsJsonObject("action").get("command").getAsString());
+    assertFalse(page.has(ProtectionDialogs.BACK), "no llega al cliente");
+    assertFalse(page.getAsJsonObject("exit_action").has("action"), "abajo del todo, «Salir» solo cierra");
+  }
 }

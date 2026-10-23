@@ -96,7 +96,8 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     try {
       // /prclan sirve aunque los clanes estén desactivados: entonces solo muestra las protecciones
       if (command.getName().equals("prclan")) {
-        views.home(sender, null);
+        if (args.length > 0 && args[0].equalsIgnoreCase("inicio")) views.home(sender, null);
+        else views.hub(sender);
         return true;
       }
       if (!manager.settings().enabled() && !sender.hasPermission("viciontprotections.admin.clan.manage"))

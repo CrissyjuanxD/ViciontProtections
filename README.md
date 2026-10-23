@@ -10,7 +10,7 @@ Protecciones con WorldGuard, clanes con territorio y guerras, bloques personaliz
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-3.0.1-B995E8)
+![Versión](https://img.shields.io/badge/Versión-3.0.2-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
 [Guía](#-guía-para-jugadores) · [Clanes](#-viciont-clans) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
@@ -33,7 +33,7 @@ Protecciones con WorldGuard, clanes con territorio y guerras, bloques personaliz
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-3.0.1.jar` en `plugins/` y reinicia el servidor.
+3. Coloca `ViciontProtections-3.0.2.jar` en `plugins/` y reinicia el servidor.
 4. Configura `plugins/ViciontProtections/config.yml`, `messages.yml` y `clans.yml`. Los permisos son opcionales: sin plugin de permisos cualquier jugador puede usar las funciones de usuario y de clanes (consulta [Permisos y roles](#-permisos-y-roles)).
 
 PlaceholderAPI es opcional: si está instalado, se registran los marcadores de clan.
@@ -62,8 +62,8 @@ Solo el creador o un administrador puede romper el bloque protector. Al romperlo
 - Fuera de una protección se abre la guía. Dentro, el botón **Guía de protecciones** queda al final del diálogo.
 - Al colocar un bloque protector se abre directamente el diálogo **Nombra tu protección**.
 - Cada acción del menú vuelve a abrir el diálogo con el resultado (por ejemplo «✔ Alex ahora es miembro»), sin tener que mirar el chat.
-- **ESC cierra el menú** desde cualquier página, igual que el botón inferior **✖ Salir**. Para ir a la página anterior están los botones «Volver».
-- `/prclan` reúne en una página las guías de protecciones y de clanes, tus protecciones y tu clan.
+- Todas las páginas acaban igual: sus botones, **◀ Volver** a la página anterior y, abajo del todo, **✖ Salir**. ESC hace lo mismo que «Salir» y cierra el menú desde cualquier página.
+- `/prclan` es el panel de inicio. Si estás en una protección tuya o en un territorio de tu clan, abre su menú y añade al final tus otras protecciones, tus clanes y las guías. Si no, muestra todo eso para elegir. `/prclan inicio` abre siempre el panel, y el «Volver» de las portadas de `/pr` y `/clan` lleva ahí.
 - Los botones dependen de tu rol y se vuelven a comprobar al pulsarlos:
 
 | Rol | Botones del menú |
@@ -142,11 +142,11 @@ El banco, el mantenimiento diario, el depósito para fundar y las recompensas de
 
 ### Comandos de clanes
 
-`/clan` (alias `/clanes`, `/clans`) abre el menú de tu clan, o la guía y tus copias si no tienes ninguno; su primer botón es la **Guía de clanes**. `/prclan` muestra a la vez las guías de protecciones y de clanes, con botones a tus protecciones, a tu clan y a cada tema.
+`/clan` (alias `/clanes`, `/clans`) abre el menú de tu clan, o la guía y tus copias si no tienes ninguno; su primer botón es la **Guía de clanes**. `/prclan` abre el menú del sitio donde estás (o el panel de inicio) con tus protecciones, tus clanes y las dos guías.
 
 | Comando | Función |
 | --- | --- |
-| `/prclan` | Guías de protecciones y de clanes en una página, con tus protecciones y tu clan |
+| `/prclan` · `/prclan inicio` | Panel de inicio: el menú de donde estás, tus protecciones, tus clanes y las guías |
 | `/clan guia [tema]` · `/clan ayuda` | Guía por temas y lista de comandos |
 | `/clan lista [página]` · `/clan info [clan]` | Clanes del servidor y su ficha |
 | `/clan fundar recuperar <clan>` · `/clan fundar nuevo` | Tras colocar un bloque de clan con una copia guardada |
@@ -361,7 +361,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-3.0.1.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard, PlaceholderAPI ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot, EngineHub y PlaceholderAPI deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-3.0.2.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard, PlaceholderAPI ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot, EngineHub y PlaceholderAPI deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 
