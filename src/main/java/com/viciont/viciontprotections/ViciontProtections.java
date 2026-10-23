@@ -83,7 +83,7 @@ public final class ViciontProtections extends JavaPlugin {
           .forEach(
               name -> {
                 var command = Objects.requireNonNull(getCommand(name));
-                boolean clan = name.equals("clan") || name.equals("cc");
+                boolean clan = name.equals("clan") || name.equals("cc") || name.equals("prclan");
                 command.setExecutor(clan ? clanCommand : commands);
                 command.setTabCompleter(clan ? clanCommand : commands);
               });

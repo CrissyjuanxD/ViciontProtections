@@ -22,6 +22,9 @@ commands:
   cc:
     description: Chat del clan; sin mensaje activa o desactiva el modo clan.
     usage: /cc [mensaje]
+  prclan:
+    description: Tus protecciones y tu clan, con las guías de protecciones y de clanes en la misma página.
+    usage: /prclan
   proteccion:
     description: Gestiona protecciones y abre su diálogo cuando la versión lo permite.
     aliases:

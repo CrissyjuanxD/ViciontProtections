@@ -1,5 +1,16 @@
 # Cambios
 
+## 3.0.1
+
+### Novedades
+
+- `/prclan`: una página con las guías de protecciones y de clanes a la vez. Incluye tus protecciones, la protección donde estás, tu clan o tus invitaciones, y un botón para cada tema de la guía de clanes.
+- El menú del clan y la portada sin clan empiezan con el botón **Guía de clanes**.
+
+### Correcciones
+
+- ESC ya no vuelve atrás página tras página: ahora cierra el menú desde cualquier página. Todos los menús tienen abajo un botón **✖ Salir**, y los botones que llevan a otra página («Volver», «Guía…», «Cancelar» en las confirmaciones) pasan a la lista de botones.
+
 ## 3.0.0
 
 Viciont Clans llega a ViciontProtections. Incluye también las correcciones de 2.0.3, 2.0.4 y 2.0.5.

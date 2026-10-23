@@ -94,6 +94,11 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     if (dialog) args = Arrays.copyOf(args, args.length - 1);
     Flow flow = new Flow(sender, dialog);
     try {
+      // /prclan sirve aunque los clanes estén desactivados: entonces solo muestra las protecciones
+      if (command.getName().equals("prclan")) {
+        views.home(sender, null);
+        return true;
+      }
       if (!manager.settings().enabled() && !sender.hasPermission("viciontprotections.admin.clan.manage"))
         throw new ProtectionException("Los clanes están desactivados en este servidor.");
       if (command.getName().equals("cc")) clanChat(flow, args);
@@ -751,7 +756,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
 
   @Override
   public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-    if (command.getName().equals("cc") || !sender.hasPermission(USE)) return List.of();
+    if (command.getName().equals("cc") || command.getName().equals("prclan") || !sender.hasPermission(USE)) return List.of();
     List<String> options = new ArrayList<>();
     Player player = sender instanceof Player p ? p : null;
     Clan clan = player == null ? null : manager.getPlayerClan(player.getUniqueId()).orElse(null);

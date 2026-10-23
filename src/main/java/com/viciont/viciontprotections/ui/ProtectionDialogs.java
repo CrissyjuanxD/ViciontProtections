@@ -114,6 +114,10 @@ public class ProtectionDialogs {
 
   // ---------------------------------------------------------------- vistas
 
+  List<String> guideLines() {
+    return messages.guideLines();
+  }
+
   /** Guía; con {@code back} añade el botón para volver a esa protección. */
   public boolean guide(Player player, Protection back) {
     if (!supported(player)) return false;
@@ -203,7 +207,7 @@ public class ProtectionDialogs {
       add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Rangos, chat, territorios y guerras", "/clan");
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
-    // La guía siempre queda debajo de todo, como botón inferior del diálogo.
+    // La guía siempre queda al final de los botones; debajo, «Salir» (ver escapeCloses).
     dialog.add(
         "exit_action",
         button("{titulo}۞ {texto}Guía de protecciones", null, root + "guia"));
@@ -576,8 +580,36 @@ public class ProtectionDialogs {
   }
 
   protected boolean show(Player player, JsonObject dialog) {
+    escapeCloses(dialog);
     withOneAction(dialog);
     return transport.show(player, dialog);
+  }
+
+  /**
+   * ESC ejecuta el botón inferior del diálogo (o el «no» de una confirmación). Para que ESC siempre
+   * cierre en vez de volver atrás página tras página, los botones que navegan pasan a la lista de
+   * acciones y el inferior queda como «Salir», que solo cierra.
+   */
+  static void escapeCloses(JsonObject dialog) {
+    if ("minecraft:confirmation".equals(type(dialog))) {
+      var actions = new JsonArray();
+      actions.add(dialog.remove("yes"));
+      actions.add(dialog.remove("no"));
+      dialog.addProperty("type", "minecraft:multi_action");
+      dialog.addProperty("columns", 2);
+      dialog.add("actions", actions);
+    }
+    if (!"minecraft:multi_action".equals(type(dialog))) return;
+    var actions = dialog.has("actions") ? dialog.getAsJsonArray("actions") : new JsonArray();
+    dialog.add("actions", actions);
+    if (dialog.has("exit_action") && dialog.getAsJsonObject("exit_action").has("action"))
+      actions.add(dialog.remove("exit_action"));
+    if (!dialog.has("exit_action") && !actions.isEmpty())
+      dialog.add("exit_action", button("{suave}✖ {texto}Salir", null, null));
+  }
+
+  private static String type(JsonObject dialog) {
+    return dialog.has("type") ? dialog.get("type").getAsString() : "";
   }
 
   /**
@@ -596,7 +628,7 @@ public class ProtectionDialogs {
     return AccessPolicy.allows(player, p, action);
   }
 
-  private static boolean hasAdmin(Player player) {
+  static boolean hasAdmin(Player player) {
     for (String node : List.of("give", "selection", "list", "reload"))
       if (player.hasPermission("viciontprotections.admin." + node)) return true;
     return false;

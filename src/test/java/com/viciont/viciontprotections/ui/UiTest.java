@@ -102,4 +102,47 @@ class UiTest {
     ProtectionDialogs.withOneAction(empty);
     assertEquals(1, empty.getAsJsonArray("actions").size());
   }
+
+  @Test
+  void escapeAlwaysClosesAndBackButtonsMoveToTheList() {
+    JsonObject menu =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:multi_action","title":{"text":"Casa"},"body":[],
+                 "actions":[{"label":{"text":"Miembros"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x miembros"}}],
+                 "exit_action":{"label":{"text":"Guía"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x guia"}}}
+                """)
+            .getAsJsonObject();
+    ProtectionDialogs.escapeCloses(menu);
+    var actions = menu.getAsJsonArray("actions");
+    assertEquals(2, actions.size(), "la guía pasa a la lista de botones");
+    assertEquals("/pr @x guia", actions.get(1).getAsJsonObject().getAsJsonObject("action").get("command").getAsString());
+    assertFalse(menu.getAsJsonObject("exit_action").has("action"), "el botón inferior (y ESC) solo cierra");
+
+    JsonObject confirm =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:confirmation","title":{"text":"Eliminar"},"body":[],
+                 "yes":{"label":{"text":"Sí"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x eliminar confirmar"}},
+                 "no":{"label":{"text":"No"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x menu"}}}
+                """)
+            .getAsJsonObject();
+    ProtectionDialogs.escapeCloses(confirm);
+    assertEquals("minecraft:multi_action", confirm.get("type").getAsString());
+    assertEquals(2, confirm.getAsJsonArray("actions").size());
+    assertFalse(confirm.getAsJsonObject("exit_action").has("action"));
+    assertInstanceOf(MultiActionDialog.class, SpigotDialogs.convert(confirm));
+
+    JsonObject list =
+        JsonParser.parseString(
+                """
+                {"type":"minecraft:multi_action","title":{"text":"Lista"},"body":[],
+                 "actions":[{"label":{"text":"Casa"},"width":150,"action":{"type":"minecraft:run_command","command":"/pr @x menu"}}],
+                 "exit_action":{"label":{"text":"Cerrar"},"width":150}}
+                """)
+            .getAsJsonObject();
+    ProtectionDialogs.escapeCloses(list);
+    assertEquals(1, list.getAsJsonArray("actions").size());
+    assertEquals("Cerrar", list.getAsJsonObject("exit_action").getAsJsonObject("label").get("text").getAsString());
+  }
 }
