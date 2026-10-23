@@ -21,6 +21,7 @@ public final class DatabaseManager implements AutoCloseable {
   private static final Gson JSON = new Gson();
   private final HikariDataSource pool;
   private final String prefix;
+  private ClanStore clans;
   private final ExecutorService worker =
       new ThreadPoolExecutor(
           1,
@@ -109,6 +110,24 @@ public final class DatabaseManager implements AutoCloseable {
           store.migrateLegacy(local);
         }
       }
+      store.clans = new ClanStore(store, type.equals("sqlite") ? folder.resolve("protections-pre-clanes.db") : null);
+      if (type.equals("mysql") && Files.isRegularFile(sqlite)) {
+        try (Connection local = DriverManager.getConnection("jdbc:sqlite:" + sqlite)) {
+          int copied = store.clans.importSqlite(local);
+          if (copied > 0)
+            plugin
+                .getLogger()
+                .info("Se copiaron " + copied + " clanes de " + filename + " a MySQL.");
+          else if (copied < 0)
+            plugin
+                .getLogger()
+                .warning(
+                    "Los clanes de "
+                        + filename
+                        + " no se copiaron a MySQL: sus territorios no están en esa base. Copia"
+                        + " antes las protecciones o vacía las tablas de MySQL.");
+        }
+      }
       return store;
     } catch (SQLException | RuntimeException failure) {
       pool.close();
@@ -116,8 +135,17 @@ public final class DatabaseManager implements AutoCloseable {
     }
   }
 
-  private String table(String name) {
+  String table(String name) {
     return prefix + name;
+  }
+
+  /** Tablas de clanes; disponibles tras {@link #open}. */
+  public ClanStore clans() {
+    return clans;
+  }
+
+  Connection connection() throws SQLException {
+    return pool.getConnection();
   }
 
   private void initialize() throws SQLException {
@@ -269,7 +297,7 @@ public final class DatabaseManager implements AutoCloseable {
     return submit(() -> transaction(connection -> delete(connection, id)));
   }
 
-  private CompletableFuture<Void> submit(SqlRunnable work) {
+  CompletableFuture<Void> submit(SqlRunnable work) {
     try {
       return CompletableFuture.runAsync(
           () -> {
@@ -285,7 +313,7 @@ public final class DatabaseManager implements AutoCloseable {
     }
   }
 
-  private void transaction(SqlWork work) throws SQLException {
+  void transaction(SqlWork work) throws SQLException {
     try (Connection connection = pool.getConnection()) {
       connection.setAutoCommit(false);
       try {
@@ -453,7 +481,7 @@ public final class DatabaseManager implements AutoCloseable {
         });
   }
 
-  private boolean hasTable(Connection connection, String name) throws SQLException {
+  boolean hasTable(Connection connection, String name) throws SQLException {
     try (ResultSet rows =
         connection
             .getMetaData()
@@ -475,12 +503,12 @@ public final class DatabaseManager implements AutoCloseable {
   }
 
   @FunctionalInterface
-  private interface SqlWork {
+  interface SqlWork {
     void run(Connection connection) throws SQLException;
   }
 
   @FunctionalInterface
-  private interface SqlRunnable {
+  interface SqlRunnable {
     void run() throws SQLException;
   }
 }

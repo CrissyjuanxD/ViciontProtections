@@ -5,13 +5,23 @@ api-version: '1.21'
 authors:
 - CrissyjuanxD
 website: https://github.com/CrissyjuanxD/ViciontProtections
-description: Protecciones WorldGuard con nombres, API, SQL y diálogos.
+description: Protecciones y clanes con WorldGuard, nombres, API, SQL y diálogos.
 depend:
 - WorldGuard
 - WorldEdit
 softdepend:
 - ViaVersion
+- PlaceholderAPI
 commands:
+  clan:
+    description: Menú y gestión de tu clan (Viciont Clans).
+    aliases:
+    - clanes
+    - clans
+    usage: /clan guia
+  cc:
+    description: Chat del clan; sin mensaje activa o desactiva el modo clan.
+    usage: /cc [mensaje]
   proteccion:
     description: Gestiona protecciones y abre su diálogo cuando la versión lo permite.
     aliases:
@@ -119,3 +129,34 @@ permissions:
       viciontprotections.admin.transfer: true
       viciontprotections.admin.reload: true
       viciontprotections.admin.list: true
+      viciontprotections.admin.clan.spy: true
+      viciontprotections.admin.clan.manage: true
+      viciontprotections.admin.clan.war: true
+  viciontprotections.clan.use:
+    description: Usar /clan y /cc según el rango en cada clan.
+    default: op
+  viciontprotections.clan.create:
+    description: Fundar un clan colocando un bloque de clan.
+    default: op
+  viciontprotections.clan.*:
+    description: Conjunto de permisos de clanes para jugadores.
+    default: op
+    children:
+      viciontprotections.clan.use: true
+      viciontprotections.clan.create: true
+  viciontprotections.admin.clan.spy:
+    description: Leer todos los chats de clan con /clan espiar.
+    default: op
+  viciontprotections.admin.clan.manage:
+    description: Gestionar cualquier clan con /clan admin (miembros, rangos, varios clanes, disolver).
+    default: op
+  viciontprotections.admin.clan.war:
+    description: Cerrar guerras con /clan admin guerra terminar.
+    default: op
+  viciontprotections.admin.clan.*:
+    description: Conjunto de permisos de administración de clanes.
+    default: op
+    children:
+      viciontprotections.admin.clan.spy: true
+      viciontprotections.admin.clan.manage: true
+      viciontprotections.admin.clan.war: true

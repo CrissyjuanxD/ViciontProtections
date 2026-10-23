@@ -6,14 +6,14 @@
 
 **Tu terreno, tu nombre, tus reglas.**
 
-Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos morados y rosas.
+Protecciones con WorldGuard, clanes con territorio y guerras, bloques personalizables y una interfaz en tonos morados y rosas.
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-2.0.2-B995E8)
+![Versión](https://img.shields.io/badge/Versión-3.0.0-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
-[Guía](#-guía-para-jugadores) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
+[Guía](#-guía-para-jugadores) · [Clanes](#-viciont-clans) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
 
 </div>
 
@@ -25,6 +25,7 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 - Menú con diálogos desde **1.21.6** (Spigot y Paper), con guía integrada; menús de chat pulsables en versiones anteriores.
 - Prefijo `[Viciont Protections]` en degradado, paleta morada y rosa configurable y colores propios para administración, WorldGuard y WorldEdit.
 - Aviso de entrada por chat y action bar, y límites personales con partículas en degradado morado y rosa pastel.
+- **Viciont Clans**: clanes con bloque de clan, territorio, cinco rangos con permisos ajustables, chat privado, nombre sobre el nick, guerras de rol, copias de 5 días y API para bancos y otros plugins.
 - SQLite incluido o MySQL con creación automática de tablas.
 - API pública con servicio Bukkit, eventos y operaciones asíncronas de persistencia.
 
@@ -32,8 +33,10 @@ Protecciones con WorldGuard, bloques personalizables y una interfaz en tonos mor
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-2.0.2.jar` en `plugins/` y reinicia el servidor.
-4. Configura permisos, `plugins/ViciontProtections/config.yml` y `messages.yml`.
+3. Coloca `ViciontProtections-3.0.0.jar` en `plugins/` y reinicia el servidor.
+4. Configura permisos, `plugins/ViciontProtections/config.yml`, `messages.yml` y `clans.yml`.
+
+PlaceholderAPI es opcional: si está instalado, se registran los marcadores de clan.
 
 Los diálogos usan la API nativa de Spigot 1.21.6+ y, en Paper, el comando vanilla `/dialog` con un emisor silencioso (sin avisos a los OP ni registros en consola). Consulta [VALIDATION.md](docs/VALIDATION.md) para ver qué versiones se han probado y cómo.
 
@@ -74,6 +77,108 @@ Solo el creador o un administrador puede romper el bloque protector. Al romperlo
 
 La visualización de límites es personal y temporal: no muestra partículas a todos los jugadores y se desactiva al desconectarte o perder acceso.
 
+## ۞ Viciont Clans
+
+Desde la 3.0.0 el plugin incluye clanes: grupos de jugadores con nombre, color, territorio protegido, rangos, chat privado y guerras de rol. Sus mensajes llevan el prefijo **`[Viciont Clans]`** con una paleta propia de amarillo pastel, dorado y naranja con toques morados. `/clan guia` explica todo el sistema por temas, también a quien no tiene clan, y enlaza con la guía de protecciones.
+
+### Fundar un clan
+
+1. La administración, una tienda o un plugin entrega un **bloque de clan** (`/pr dar <jugador> <bloque> <ancho> … clan`). Lleva el nombre «۞ Bloque de clan» y su tamaño en la descripción.
+2. Un jugador sin clan lo coloca en terreno libre. Se abre el diálogo para elegir **nombre** (3–24 caracteres) y **color**, con los requisitos de los plugins conectados, como un depósito inicial.
+3. La zona del bloque pasa a ser el **territorio principal** y el fundador es el **líder**. Si no confirma en 5 minutos, el bloque vuelve a su inventario.
+
+Solo el líder puede romper el bloque de clan, y romperlo **disuelve el clan** tras confirmarlo. Las protecciones aportadas vuelven a sus dueños con sus roles anteriores.
+
+**Cambiar a un bloque más grande.** El líder coloca el nuevo bloque de clan (por ejemplo, de 300 × 300 en lugar de 150 × 150) y confirma. El territorio principal se mueve a la nueva zona, el bloque antiguo vuelve a su inventario y el clan conserva miembros, rangos, permisos, territorios y banco. La nueva zona puede incluir la antigua, pero no otras regiones.
+
+**Copias de seguridad.** Al disolver un clan (rompiendo el bloque, por su líder o por la administración) se guarda una copia durante **5 días** (`clanes.copia-dias`). Cuando su antiguo líder coloca un bloque de clan, el plugin le pregunta si quiere **fundar uno nuevo o recuperar el anterior**, con nombre, color, rangos, permisos, banderas y los miembros que no se hayan unido a otro clan. Las zonas aportadas no vuelven, porque ya regresaron a sus dueños, pero se pueden aportar de nuevo. La recuperación no cobra el depósito. **Los clanes disueltos por no pagar el mantenimiento no guardan copia.**
+
+### Rangos, permisos y miembros
+
+| Rango | Por defecto |
+| --- | --- |
+| Líder | Todo: permisos, ajustes, banderas, guerras, transferir y disolver |
+| Sublíder | Lo del oficial, y además asciende, degrada y acepta territorios |
+| Oficial | Lo del aprendiz, y además abre cofres, invita y expulsa |
+| Aprendiz | Construye, usa animales, ve los límites y aporta territorios |
+| Invitado | Entra, usa puertas y botones y habla en el chat del clan |
+
+Nadie actúa sobre alguien de su mismo rango o superior. El líder cambia cada casilla por rango en `/clan permisos`; el servidor puede fijar casillas en `clans.yml`, y los plugins conectados añaden las suyas (por ejemplo, aportar o retirar del banco). Un clan admite **30 miembros** por defecto (`clanes.miembros-maximos`), contando al líder. Cada jugador pertenece a un solo clan; la administración puede ponerlo en varios y él elige cuál mostrar con `/clan activo`.
+
+### Territorios
+
+- Dentro de una protección propia, `/clan territorio aportar` la pasa al clan. Líder y sublíderes la aportan al momento; los demás rangos envían una solicitud que caduca en 7 días.
+- En los territorios mandan los rangos del clan: construir, cofres, puertas y animales según sus casillas. Quien no es del clan pierde el acceso, y el menú lo avisa antes de confirmar.
+- Mientras una zona sea del clan, `/pr` no cambia sus miembros, propietarios, creador ni la elimina.
+- `/clan territorio quitar` devuelve una zona a su dueño con sus roles anteriores. `/clan limites` muestra el borde de todos los territorios.
+- El líder ajusta las banderas de WorldGuard de todos los territorios a la vez con `/clan bandera`, entre las permitidas en `clans.yml`.
+- Al entrar y salir de un territorio se avisa por chat y action bar.
+
+### Chat y nombre sobre el nick
+
+- `/cc <mensaje>` habla solo con el clan. `/cc` sin texto activa el **modo clan**, en el que todo lo que escribes va al clan.
+- En el chat público aparece `[Clan]` con su color delante del nombre. Si prefieres colocarlo tú, desactívalo y usa `%viciont_clan%` de PlaceholderAPI.
+- Cada mensaje del clan se registra en la consola (`[ChatClan]`) y en `logs/chat-clanes-AAAA-MM-DD.log`. Con `admin.clan.spy`, `/clan espiar` muestra todos los chats de clan.
+- El **nombre del clan sale encima del nick** de cada jugador, con su color y ⚔ durante una guerra. Es una entidad de texto que sigue al jugador, sin usar `BELOW_NAME` ni el marcador lateral, así que convive con otros plugins que ya los usan. Su altura se ajusta si hay algo debajo del nombre. El propio jugador no la ve, y se oculta al estar invisible, en espectador, muerto, con algo encima (como una burbuja de chat) o con la etiqueta de nombre oculta por un equipo.
+
+### Guerras
+
+1. El líder declara la guerra con un motivo: `/clan guerra declarar <clan> <motivo>`.
+2. Pasadas **24 horas** de preaviso, hay PvP entre los dos clanes en cualquier lugar, también donde WorldGuard lo deniega. Romper, construir o abrir cofres del enemigo sigue prohibido.
+3. Termina cuando un líder **se rinde** (con un tributo y condiciones) o ambos firman la **paz**, que admite contraofertas. Sin final en 14 días, acaba sin vencedor.
+
+Solo luchan los miembros con 24 horas en el clan, nunca los invitados. Un clan solo tiene una guerra a la vez, los clanes con menos de 3 días no reciben declaraciones, y dos clanes esperan 7 días para volver a enfrentarse. Las bajas quedan en la crónica de la guerra. Todos los plazos están en `clans.yml`.
+
+### Banco y plugins conectados
+
+El banco, el mantenimiento diario, el depósito para fundar y las recompensas de guerra **no están en este plugin**: los añade otro plugin mediante la [API de clanes](docs/API.md#clanes). Por ejemplo, QuasoPlugin implementa un banco de DinoCoins con su botón en el menú, sus casillas de permiso, sus líneas de estado y su tema en la guía. Sin plugins conectados, fundar es gratis y no hay mantenimiento.
+
+### Comandos de clanes
+
+`/clan` (alias `/clanes`, `/clans`) abre el menú de tu clan, o la guía y tus copias si no tienes ninguno.
+
+| Comando | Función |
+| --- | --- |
+| `/clan guia [tema]` · `/clan ayuda` | Guía por temas y lista de comandos |
+| `/clan lista [página]` · `/clan info [clan]` | Clanes del servidor y su ficha |
+| `/clan fundar recuperar <clan>` · `/clan fundar nuevo` | Tras colocar un bloque de clan con una copia guardada |
+| `/clan aceptar <clan>` · `/clan rechazar <clan>` | Responder a una invitación |
+| `/clan miembros` · `/clan invitar <jugador> [rango]` · `/clan expulsar <jugador>` | Gestionar miembros |
+| `/clan rango <jugador> <rango>` · `/clan ascender` · `/clan degradar` | Cambiar rangos |
+| `/clan transferir <jugador>` | Pasar el liderazgo; el antiguo líder queda como sublíder |
+| `/clan territorio aportar\|quitar` · `/clan territorios` · `/clan solicitudes` | Territorios y solicitudes |
+| `/clan limites` | Mostrar u ocultar el borde de los territorios |
+| `/clan permisos` · `/clan ajustes` | Casillas por rango, nombre, color y banderas |
+| `/clan nombre <nombre>` · `/clan color <color>` · `/clan bandera <bandera> <valor>` | Ajustes del líder |
+| `/clan bloque [confirmar\|cancelar]` | Cambiar el bloque de clan por el que acabas de colocar |
+| `/clan guerra [declarar\|rendirse\|paz]` | Estado y acciones de guerra |
+| `/clan chat` · `/clan modo` · `/cc [mensaje]` | Chat del clan |
+| `/clan activo <clan>` | Elegir el clan que muestras, si estás en varios |
+| `/clan salir` · `/clan disolver` | Salir del clan o disolverlo (con confirmación) |
+| `/clan espiar` | Ver todos los chats de clan (administración) |
+| `/clan admin <clan> [info\|añadir\|quitar\|rango\|nombre\|color\|disolver]` | Gestionar cualquier clan (administración) |
+| `/clan admin guerra terminar <clan>` | Cerrar una guerra (administración) |
+
+### Permisos de clanes
+
+| Permiso | Por defecto | Función |
+| --- | --- | --- |
+| `viciontprotections.clan.*` | OP | `clan.use` y `clan.create` |
+| `viciontprotections.clan.use` | OP | Usar `/clan` y `/cc` según el rango en cada clan |
+| `viciontprotections.clan.create` | OP | Fundar un clan colocando un bloque de clan |
+| `viciontprotections.admin.clan.*` | OP | Las tres de administración de clanes |
+| `viciontprotections.admin.clan.spy` | OP | `/clan espiar` |
+| `viciontprotections.admin.clan.manage` | OP | `/clan admin`: miembros, rangos, varios clanes, nombre, color y disolver |
+| `viciontprotections.admin.clan.war` | OP | `/clan admin guerra terminar` |
+
+Para jugadores, con LuckPerms: `/lp group default permission set viciontprotections.clan.* true`. Los nodos de administración están bajo `admin.clan.*` para que `clan.*` no los conceda; `viciontprotections.admin.*` los incluye.
+
+### clans.yml y PlaceholderAPI
+
+`plugins/ViciontProtections/clans.yml` controla la paleta y los prefijos, los nombres de los rangos, los colores elegibles, los permisos por defecto y bloqueados, las banderas permitidas, los formatos del chat y de la etiqueta, los avisos de territorio, los plazos de guerra, el límite de miembros, los días de copia y los textos de la guía. `/pr recargar` lo recarga. Con `clanes.activos: false` se desactivan los clanes.
+
+Con PlaceholderAPI instalado: `%viciont_clan%` (etiqueta con color), `%viciont_clan_nombre%`, `%viciont_clan_rango%`, `%viciont_clan_color%` y `%viciont_clan_guerra%` (clan enemigo).
+
 ## ۞ Comandos
 
 Alias principales: `/proteccion`, `/pr`, `/protections`, `/vp` y `/proteccionv`.
@@ -93,7 +198,7 @@ Alias principales: `/proteccion`, `/pr`, `/protections`, `/vp` y `/proteccionv`.
 | `/pr limites` | Mostrar u ocultar tus partículas de borde |
 | `/pr eliminar` | Pedir confirmación para eliminar la protección |
 | `/pr admin` | Panel de administración (diálogo) |
-| `/pr dar <jugador> <bloque> <ancho> [profundidad] [altura\|todo] [cantidad]` | Entregar bloques protectores |
+| `/pr dar <jugador> <bloque> <ancho> [profundidad] [altura\|todo] [cantidad] [clan]` | Entregar bloques protectores, o de clan con `clan` al final |
 | `/pr seleccion <creador> [nombre]` | Proteger tu selección cúbica de WorldEdit |
 | `/pr bandera <bandera> <permitir\|denegar\|restablecer>` | Configurar una bandera de estado de WorldGuard |
 | `/pr transferir <jugador\|UUID>` | Cambiar el creador; el anterior queda como propietario añadido |
@@ -109,6 +214,7 @@ Los destinatarios por nombre deben estar conectados o haber entrado al servidor;
 /pr dar Alex DIAMOND_BLOCK 32
 /pr dar Alex AMETHYST_BLOCK 45 21 todo 2
 /pr dar Alex GOLD_BLOCK 20 12 15 1
+/pr dar Alex BEACON 150 150 todo 1 clan
 /pr seleccion Alex Mercado central
 /pr bandera pvp denegar
 ```
@@ -161,7 +267,7 @@ Los permisos Bukkit habilitan la función; el rol dentro de la protección deter
 | `viciontprotections.admin.list` | Ver todas las protecciones en la lista |
 | `viciontprotections.admin.reload` | Recargar configuración |
 
-`admin.manage` no concede automáticamente `dar`, `seleccion`, `recargar` o acceso a listas. Para administración completa usa `admin.*` junto con `user.*`, o conserva OP.
+`admin.manage` no concede automáticamente `dar`, `seleccion`, `recargar` o acceso a listas. Para administración completa usa `admin.*` junto con `user.*`, o conserva OP. Los permisos de clanes están en [Permisos de clanes](#permisos-de-clanes).
 
 ## ۞ Mensajes y enlaces
 
@@ -190,7 +296,7 @@ Usa direcciones `https://`. Un campo vacío oculta ese enlace y mantiene visible
 
 ## ۞ Almacenamiento y actualización
 
-SQLite funciona sin configuración adicional. Para MySQL, crea una base de datos y un usuario con permisos sobre ella; el plugin crea sus tablas `vp_meta`, `vp_protections` y `vp_roles`.
+SQLite funciona sin configuración adicional. Para MySQL, crea una base de datos y un usuario con permisos sobre ella; el plugin crea sus tablas `vp_meta`, `vp_protections` y `vp_roles`, y las de clanes (`vp_clans`, `vp_clan_members`, `vp_clan_permissions`, `vp_clan_territories`, `vp_clan_requests`, `vp_clan_wars` y `vp_clan_backups`).
 
 ```yaml
 database:
@@ -208,6 +314,10 @@ database:
 
 Las tablas de MySQL/MariaDB se crean en `utf8mb4`, así que los nombres con acentos u otros alfabetos funcionan aunque la base use otra codificación. Las escrituras son transaccionales y se ejecutan fuera del hilo principal. Las consultas durante el movimiento utilizan la caché y el índice de WorldGuard. Si una escritura falla, el plugin intenta restaurar el estado anterior y avisa al usuario.
 
+### Desde 2.0.x
+
+Reemplaza el JAR y reinicia. Antes de crear las tablas de clanes, el plugin guarda una copia de la base: `protections-pre-clanes.db` con SQLite, o tablas `*_pre_clanes` con MySQL. Los territorios de los clanes siguen siendo protecciones normales, con el líder como creador, los sublíderes como propietarios y el resto como miembros, así que volver al JAR 2.0.2 conserva las zonas y sus accesos.
+
 ### Desde 1.x
 
 1. Detén el servidor y guarda una copia de las carpetas de ViciontProtections y WorldGuard.
@@ -219,11 +329,11 @@ La migración conserva creador, propietarios, miembros y **los límites inclusiv
 
 Si configuras MySQL al actualizar desde 1.x y conservas el SQLite antiguo en la carpeta del plugin, se importa a las nuevas tablas. La migración es idempotente. Si faltan dueños principales o hay datos inválidos, el inicio se detiene para que puedas corregirlos; no se borra la información antigua.
 
-**Para pasar de SQLite a MySQL** basta con cambiar `database.type` y reiniciar: si la base MySQL está vacía, el plugin copia las protecciones del archivo SQLite (que se conserva como copia) y anota la importación para no repetirla. Cada servidor debe usar su propia base o prefijo: no hay sincronización en vivo entre varios servidores. Conserva los nombres de los mundos al mover sus datos.
+**Para pasar de SQLite a MySQL** basta con cambiar `database.type` y reiniciar: si la base MySQL está vacía, el plugin copia las protecciones del archivo SQLite (que se conserva como copia) y anota la importación para no repetirla. Los clanes se copian con ellas; si falta en MySQL alguna zona de un clan, no se copian y la consola lo avisa. Cada servidor debe usar su propia base o prefijo: no hay sincronización en vivo entre varios servidores. Conserva los nombres de los mundos al mover sus datos.
 
 ## ۞ Para desarrolladores
 
-Consulta [la documentación de la API](docs/API.md): crear regiones sin bloques, entregar objetos para tiendas, consultar acceso, gestionar miembros/propietarios, banderas y eventos cancelables.
+Consulta [la documentación de la API](docs/API.md): crear regiones sin bloques, entregar objetos para tiendas, consultar acceso, gestionar miembros/propietarios, banderas y eventos cancelables. La [API de clanes](docs/API.md#clanes) añade consultas y acciones sobre clanes, botones, casillas de permiso, líneas de estado, temas de guía, requisitos de fundación y eventos.
 
 Compila con JDK 21 o posterior y Maven:
 
@@ -231,7 +341,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-2.0.2.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot y EngineHub deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-3.0.0.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard, PlaceholderAPI ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot, EngineHub y PlaceholderAPI deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 

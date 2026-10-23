@@ -1,0 +1,270 @@
+# ۞ Viciont Clans: clanes de ViciontProtections
+#
+# Los textos admiten &#RRGGBB, códigos &, degradados <gradient:#RRGGBB:#RRGGBB>texto</gradient> y
+# la paleta de los clanes (abajo): {titulo} {texto} {suave} {dato} {acento} {error} {admin}
+# {guerra}. Aplica los cambios con /pr recargar.
+#
+# El banco, el mantenimiento diario, el depósito inicial y la recompensa de guerra no están aquí:
+# los gestiona el plugin que los implementa (QuasoPlugin) con la API de clanes.
+clans-version: 1
+
+# Paleta de los mensajes, menús y diálogos de clanes: amarillos pastel, dorado y naranja con
+# toques morados.
+paleta:
+  titulo: '#B98CFF'      # morado: ۞ y títulos
+  texto: '#FFF1CC'       # amarillo pastel
+  suave: '#CDB4F5'       # lila para corchetes, separadores y texto secundario
+  dato: '#FFD36B'        # dorado para nombres y valores
+  acento: '#FFA94D'      # naranja para resaltar
+  error: '#FF9F80'       # avisos y errores
+  admin: '#C99BFF'       # etiqueta de administración
+  guerra: '#FF7A45'      # etiqueta de guerra
+
+prefijos:
+  publico: '{titulo}۞ {suave}[<gradient:#FFE08A:#FFA94D>Viciont Clans</gradient>{suave}] {texto}'
+  admin: '{titulo}۞ {suave}[<gradient:#FFD36B:#C99BFF>Viciont Clans</gradient>{suave}] {admin}Admin {suave}» {texto}'
+  guerra: '{titulo}۞ {suave}[<gradient:#FFB347:#FF6A3D>Viciont Clans</gradient>{suave}] {guerra}Guerra {suave}» {texto}'
+
+clanes:
+  activos: true
+  # Miembros como máximo por clan (contando al líder). La administración puede superarlo con
+  # /clan admin <clan> añadir.
+  miembros-maximos: 30
+  # Caracteres del nombre de un clan.
+  nombre-minimo: 3
+  nombre-maximo: 24
+  # Minutos para aceptar una invitación.
+  invitacion-minutos: 5
+  # Días para aceptar una solicitud de territorio antes de que caduque.
+  solicitud-territorio-dias: 7
+  # Minutos para fundar el clan tras colocar el bloque de clan; después vuelve al inventario.
+  fundacion-minutos: 5
+  # Anunciar a todo el servidor la fundación y la disolución de clanes.
+  anunciar: true
+  # Días que se guarda la copia de un clan disuelto (por romper el bloque, por su líder o por la
+  # administración). Su líder la recupera colocando un bloque de clan. Los clanes disueltos por no
+  # pagar el mantenimiento no guardan copia. 0 = sin copias.
+  copia-dias: 5
+
+# Nombres visibles de los cinco rangos. Los rangos y su orden son fijos.
+rangos:
+  lider: 'Líder'
+  sublider: 'Sublíder'
+  oficial: 'Oficial'
+  aprendiz: 'Aprendiz'
+  invitado: 'Invitado'
+
+# Colores que el líder puede elegir para su clan.
+colores:
+  lila: '#C29BFF'
+  rosa: '#F5A8D6'
+  morado: '#9B6BFF'
+  fucsia: '#F06AAE'
+  celeste: '#8FD3FF'
+  turquesa: '#5FE0D0'
+  menta: '#8FF0C8'
+  lima: '#C8F07A'
+  oro: '#FFD36B'
+  melocoton: '#FFB38A'
+  coral: '#FF8A8A'
+  plata: '#D7D7E0'
+
+# Permisos por defecto de cada rango (el líder los tiene todos). El líder los ajusta en
+# /clan permisos; con bloqueado: true nadie puede cambiar esa casilla.
+permisos:
+  puertas:
+    rangos: [sublider, oficial, aprendiz, invitado]
+    bloqueado: false
+  construir:
+    rangos: [sublider, oficial, aprendiz]
+    bloqueado: false
+  animales:
+    rangos: [sublider, oficial, aprendiz]
+    bloqueado: false
+  limites:
+    rangos: [sublider, oficial, aprendiz]
+    bloqueado: false
+  cofres:
+    rangos: [sublider, oficial]
+    bloqueado: false
+  aportar:
+    rangos: [sublider, oficial, aprendiz]
+    bloqueado: false
+  invitar:
+    rangos: [sublider, oficial]
+    bloqueado: false
+  expulsar:
+    rangos: [sublider, oficial]
+    bloqueado: false
+  rangos:
+    rangos: [sublider]
+    bloqueado: false
+  territorios:
+    rangos: [sublider]
+    bloqueado: false
+  banderas:
+    rangos: []
+    bloqueado: false
+  ajustes:
+    rangos: []
+    bloqueado: false
+  guerra:
+    rangos: []
+    bloqueado: false
+
+# Banderas de WorldGuard que el líder puede cambiar en todos sus territorios.
+banderas-permitidas:
+  - pvp
+  - mob-spawning
+  - mob-damage
+  - creeper-explosion
+  - fire-spread
+  - lava-fire
+  - leaf-decay
+  - ice-melt
+  - snow-fall
+  - crop-growth
+  - item-drop
+  - item-pickup
+  - sleep
+  - enderpearl
+
+chat:
+  # Nombre del clan delante del formato del chat público. %clan% = nombre, %color% = color.
+  # Pon publico-activo: false si prefieres colocarlo tú con %viciont_clan% de PlaceholderAPI.
+  publico-activo: true
+  publico: '%color%[%clan%] '
+  # Chat privado (/cc). %rango%, %jugador%, %mensaje%.
+  clan: '%color%[Clan] {suave}%rango% {dato}%jugador% %color%» {texto}%mensaje%'
+  # Avisos de plugins conectados y del propio clan en su chat.
+  aviso: '%color%[Clan] {texto}%mensaje%'
+  # Copia que reciben los espías (/clan espiar).
+  espia: '{suave}[Espía] %color%[%clan%] {dato}%jugador% {suave}» {texto}%mensaje%'
+  # Línea en la consola de cada mensaje (sin colores).
+  consola: '[ChatClan] [%clan%] %jugador%: %mensaje%'
+  # También en logs/chat-clanes-AAAA-MM-DD.log dentro de la carpeta del plugin.
+  archivo: true
+  # Mensajes guardados para el diálogo del chat del clan.
+  historial: 10
+
+# Nombre del clan sobre el nick de cada jugador.
+etiqueta:
+  activa: true
+  formato: '%color%[%clan%]'
+  # Durante una guerra.
+  formato-guerra: '%color%[%clan%] {error}⚔'
+  # Altura sobre la cabeza: auto la ajusta si el servidor muestra algo debajo del nombre
+  # (below name), o un número de bloques, por ejemplo 0.55.
+  altura: auto
+  # Distancia máxima en bloques a la que se ve.
+  distancia: 48
+  # Mundos en los que no se muestra.
+  mundos-desactivados: []
+
+avisos:
+  # %clan% = nombre del clan, %color% = su color, %name% = nombre de la protección.
+  entrada: '{texto}Haz entrado al territorio del clan %color%%clan%{texto}.'
+  entrada-actionbar: '{titulo}۞ {texto}Territorio del clan %color%%clan%'
+  salida: '{suave}Has salido del territorio del clan %color%%clan%{suave}.'
+
+guerras:
+  activas: true
+  # Horas entre la declaración y el comienzo del PvP.
+  preaviso-horas: 24
+  # Días tras los que una guerra sin final acaba sin vencedor.
+  duracion-maxima-dias: 14
+  # Días que dos clanes esperan tras una paz o una rendición para volver a enfrentarse.
+  espera-entre-guerras-dias: 7
+  # Horas en el clan necesarias para luchar en una guerra. Los invitados nunca luchan.
+  antiguedad-horas: 24
+  # Días desde la fundación durante los que un clan no puede recibir una declaración.
+  proteccion-clanes-nuevos-dias: 3
+  # Caracteres máximos del motivo y de las condiciones.
+  motivo-maximo: 120
+
+# Guía del menú (/clan guia). Cada tema es una página; los plugins conectados, como el banco,
+# añaden los suyos. Admite %invitacion%, %fundacion%, %preaviso%, %duracion%, %espera%,
+# %antiguedad% y %novatos% con los valores de este archivo.
+guia:
+  intro:
+    - '{texto}Un {dato}clan {texto}es un grupo de jugadores con nombre, color, territorio y chat propios.'
+    - '{texto}Su nombre sale en el chat público y encima de tu nick. Elige un tema para saber más.'
+  temas:
+    clan:
+      titulo: '¿Qué es un clan?'
+      icono: '۞'
+      lineas:
+        - '{texto}Un clan reúne a varios jugadores bajo un {dato}nombre {texto}y un {dato}color{texto}.'
+        - '{texto}Tiene un {dato}territorio {texto}protegido, un {dato}chat privado {texto}y, si el servidor lo usa, un {dato}banco{texto}.'
+        - '{texto}Cada jugador pertenece a {dato}un solo clan{texto}.'
+        - '{texto}Tus {dato}protecciones personales {texto}siguen siendo tuyas y privadas: el clan no gana acceso a ellas.'
+        - '{suave}Escribe {dato}/clan {suave}para abrir el menú de tu clan en cualquier momento.'
+    fundar:
+      titulo: 'Fundar un clan'
+      icono: '⚑'
+      lineas:
+        - '{acento}1. {texto}Consigue un {dato}bloque de clan {texto}en una tienda o con la administración.'
+        - '{acento}2. {texto}Colócalo sin estar en ningún clan, en terreno libre: su descripción indica el tamaño.'
+        - '{acento}3. {texto}Se abre un menú para elegir {dato}nombre {texto}(3 a 24 caracteres) y {dato}color{texto}.'
+        - '{acento}4. {texto}Fundar exige un {dato}depósito inicial{texto}, que el menú muestra antes de confirmar.'
+        - '{acento}5. {texto}La zona del bloque es tu {dato}territorio principal {texto}y tú eres el {dato}líder{texto}.'
+        - '{suave}Si no lo fundas en %fundacion% minutos, o no te alcanza el depósito, el bloque vuelve a tu inventario.'
+        - '{error}Si el líder rompe el bloque de clan, el clan se disuelve (siempre pide confirmación).'
+        - '{texto}Para pasar a un bloque más grande, el líder coloca el nuevo y confirma: el territorio se mueve a él y el antiguo vuelve a su inventario, {dato}sin disolver el clan{texto}.'
+        - '{suave}Si el clan se disuelve por error, se guarda una copia %copia% días: su líder la recupera colocando un bloque de clan. No se guarda si fue por no pagar el mantenimiento.'
+    rangos:
+      titulo: 'Rangos'
+      icono: '♛'
+      lineas:
+        - '{dato}Líder{texto}: lo controla todo, ajusta permisos, declara guerras y puede disolver el clan.'
+        - '{dato}Sublíder{texto}: su mano derecha; asciende, degrada y acepta territorios.'
+        - '{dato}Oficial{texto}: invita y expulsa a aprendices e invitados; abre cofres.'
+        - '{dato}Aprendiz{texto}: construye y usa el territorio.'
+        - '{dato}Invitado{texto}: entra, usa puertas y botones y habla en el chat del clan.'
+        - '{texto}Nadie puede actuar sobre alguien de {dato}su mismo rango o superior{texto}.'
+        - '{suave}Comandos: {dato}/clan rango <jugador> <rango>{suave}, {dato}/clan transferir <jugador>{suave}.'
+    permisos:
+      titulo: 'Permisos'
+      icono: '✔'
+      lineas:
+        - '{texto}Cada rango tiene unos {dato}permisos por defecto{texto}: construir, abrir cofres, invitar...'
+        - '{texto}El líder los cambia en {dato}/clan permisos{texto}: elige un rango y pulsa cada casilla.'
+        - '{texto}Las casillas {suave}fijadas por el servidor {texto}salen aparte y no se pueden cambiar.'
+        - '{suave}Los plugins conectados, como el banco, añaden sus propias casillas.'
+    miembros:
+      titulo: 'Invitar y salir'
+      icono: '✉'
+      lineas:
+        - '{dato}/clan invitar <jugador> [rango] {texto}envía una invitación que caduca en %invitacion% minutos.'
+        - '{texto}El invitado responde con {dato}/clan aceptar <clan> {texto}o {dato}/clan rechazar <clan>{texto}.'
+        - '{dato}/clan expulsar <jugador> {texto}saca a alguien de rango inferior.'
+        - '{dato}/clan salir {texto}te saca del clan. El líder no puede salir: transfiere el liderazgo o disuelve el clan.'
+    chat:
+      titulo: 'Chat del clan'
+      icono: '✎'
+      lineas:
+        - '{dato}/cc <mensaje> {texto}habla solo con los miembros conectados de tu clan.'
+        - '{dato}/cc {texto}sin texto activa o desactiva el {dato}modo clan{texto}: todo lo que escribas irá al clan.'
+        - '{texto}En el chat público sale {dato}[Nombre del clan] {texto}delante de tu nombre.'
+        - '{suave}Los mensajes del clan quedan registrados para la moderación del servidor.'
+    territorios:
+      titulo: 'Territorios'
+      icono: '⌂'
+      lineas:
+        - '{texto}El {dato}territorio principal {texto}es la zona del bloque de clan.'
+        - '{texto}Dentro de una protección tuya, {dato}/clan territorio aportar {texto}la pasa al clan.'
+        - '{texto}Líder y sublíderes la aportan al momento; oficiales y aprendices envían una {dato}solicitud{texto}.'
+        - '{error}Quien no sea del clan pierde el acceso a esa zona; {texto}el menú te avisa antes de confirmar.'
+        - '{dato}/clan solicitudes {texto}acepta o rechaza ofertas; {dato}/clan territorio quitar {texto}devuelve una zona a su dueño.'
+        - '{dato}/clan limites {texto}muestra u oculta el borde del territorio con partículas.'
+    guerras:
+      titulo: 'Guerras'
+      icono: '⚔'
+      lineas:
+        - '{texto}Una guerra es de {dato}rol y PvP{texto}: no hay marcador, la terminan los propios clanes.'
+        - '{acento}1. {texto}El líder la declara con un motivo: {dato}/clan guerra declarar <clan> <motivo>{texto}.'
+        - '{acento}2. {texto}El PvP entre los dos clanes empieza {dato}%preaviso% horas {texto}después y vale en cualquier parte, también en sus territorios.'
+        - '{acento}3. {texto}Romper, construir o abrir cofres del enemigo {error}sigue prohibido{texto}.'
+        - '{acento}4. {texto}Termina cuando un líder {dato}se rinde {texto}(paga una recompensa al ganador) o los dos firman la {dato}paz{texto}.'
+        - '{suave}Solo luchan miembros con %antiguedad% horas en el clan; los invitados no participan.'
+        - '{suave}Sin final en %duracion% días acaba sin vencedor. Los clanes nuevos no reciben guerras en %novatos% días y dos clanes esperan %espera% días para volver a enfrentarse.'

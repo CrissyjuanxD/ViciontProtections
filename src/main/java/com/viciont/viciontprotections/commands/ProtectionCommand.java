@@ -32,6 +32,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
   private final ProtectionDialogs dialogs;
   private final ChatViews chat;
   private final Boundaries boundaries;
+  private Runnable reloadHook = () -> {};
 
   public ProtectionCommand(
       JavaPlugin plugin,
@@ -46,6 +47,11 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     this.dialogs = dialogs;
     this.chat = chat;
     this.boundaries = boundaries;
+  }
+
+  /** Otros ajustes que se recargan con /pr recargar (clans.yml). */
+  public void setReloadHook(Runnable hook) {
+    reloadHook = hook == null ? () -> {} : hook;
   }
 
   /**
@@ -389,11 +395,13 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     flow.views(notice -> dialogs.admin(flow.player, notice), notice -> dialogs.admin(flow.player, notice));
     plugin.reloadConfig();
     messages.reload();
+    reloadHook.run();
     manager.guard().setDenyMessage(messages.text("avisos.denegado"));
     manager.resync();
     flow.succeed(
         Messages.Theme.ADMIN,
-        "config.yml y messages.yml recargados. Los cambios de base de datos se aplican al reiniciar.");
+        "config.yml, messages.yml y clans.yml recargados. Los cambios de base de datos se aplican al"
+            + " reiniciar.");
   }
 
   // ---------------------------------------------------------------- administración
@@ -404,9 +412,15 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     flow.views(
         notice -> dialogs.form(flow.player, null, "dar", notice),
         notice -> dialogs.form(flow.player, null, "dar", notice));
+    boolean clanBlock = false;
+    if (args.length > 3
+        && Set.of("clan", "protector").contains(args[args.length - 1].toLowerCase(Locale.ROOT))) {
+      clanBlock = args[args.length - 1].equalsIgnoreCase("clan");
+      args = Arrays.copyOf(args, args.length - 1);
+    }
     require(
         args.length >= 3 && args.length <= 6,
-        "Uso: /pr dar <jugador> <bloque> <ancho> [profundidad] [altura|todo] [cantidad]");
+        "Uso: /pr dar <jugador> <bloque> <ancho> [profundidad] [altura|todo] [cantidad] [clan]");
     Player target = Bukkit.getPlayerExact(args[0]);
     if (target == null) throw new ProtectionException("El jugador " + args[0] + " debe estar conectado.");
     Material material = Material.matchMaterial(args[1]);
@@ -428,8 +442,14 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     require(width <= maximum && depth <= maximum, "El tamaño máximo configurado es " + maximum + " bloques.");
     require(amount >= 1 && amount <= 64, "La cantidad debe estar entre 1 y 64.");
     ProtectionBlock spec = new ProtectionBlock(material, width, depth, height);
-    for (int left = amount; left > 0; left -= material.getMaxStackSize())
-      giveItem(target, manager.createProtectionBlock(spec, Math.min(left, material.getMaxStackSize())));
+    for (int left = amount; left > 0; left -= material.getMaxStackSize()) {
+      int stack = Math.min(left, material.getMaxStackSize());
+      giveItem(
+          target,
+          clanBlock ? manager.createClanBlock(spec, stack) : manager.createProtectionBlock(spec, stack));
+    }
+    String kind = clanBlock ? " bloque de clan" : " bloque protector";
+    String kinds = clanBlock ? " bloques de clan" : " bloques protectores";
     flow.succeed(
         Messages.Theme.ADMIN,
         "Entregado a {dato}"
@@ -439,6 +459,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
             + " × "
             + ProtectionDialogs.pretty(material)
             + " {texto}("
+            + (clanBlock ? "bloque de clan, " : "")
             + spec.dimensions()
             + ").");
     if (target != sender)
@@ -446,10 +467,12 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
           target,
           "Has recibido {dato}"
               + amount
-              + (amount == 1 ? " bloque protector" : " bloques protectores")
+              + (amount == 1 ? kind : kinds)
               + " {texto}de {dato}"
               + spec.dimensions()
-              + "{texto}. Colócalo para proteger tu zona.");
+              + (clanBlock
+                  ? "{texto}. Colócalo sin estar en un clan para fundar el tuyo."
+                  : "{texto}. Colócalo para proteger tu zona."));
   }
 
   public static void giveItem(Player player, ItemStack item) {
@@ -525,6 +548,9 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
   }
 
   private void allowed(CommandSender sender, Protection p, Action action) {
+    if (AccessPolicy.lockedByClan(p, action))
+      throw new ProtectionException(
+          p.name() + " es territorio de un clan: su acceso se gestiona con los rangos del clan (/clan).");
     if (!AccessPolicy.allows(sender, p, action))
       throw new ProtectionException(
           sender.hasPermission(AccessPolicy.permission(action))
@@ -721,6 +747,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
           options.addAll(List.of("16", "32", "48", "64", "128"));
           if (args.length == 5) options.add("todo");
         } else if (args.length == 6) options.addAll(List.of("1", "2", "4", "16", "64"));
+        else if (args.length == 7) options.addAll(List.of("clan", "protector"));
       } else if ((first.equals("lista") || first.equals("list")) && args.length == 2) {
         options.add("1");
         if (sender.hasPermission("viciontprotections.admin.list")) options.add("todas");

@@ -23,7 +23,17 @@ import org.bukkit.plugin.java.JavaPlugin;
  * presentación.
  */
 public final class ProtectionListener implements Listener {
+  /** Lo que los clanes cambian de este listener: los bloques y los avisos de sus territorios. */
+  public interface Territories {
+    /** true si la protección es territorio de un clan y ya se atendió la rotura de su bloque. */
+    boolean anchorBroken(Player player, Protection protection);
+
+    /** true si los avisos de entrada o salida ya se mostraron. */
+    boolean crossed(Player player, Protection previous, Protection next);
+  }
+
   private final JavaPlugin plugin;
+  private Territories territories;
   private final ProtectionManager manager;
   private final Messages messages;
   private final Boundaries boundaries;
@@ -44,6 +54,10 @@ public final class ProtectionListener implements Listener {
     this.dialogs = dialogs;
   }
 
+  public void setTerritories(Territories territories) {
+    this.territories = territories;
+  }
+
   @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
   public void validatePlace(BlockPlaceEvent event) {
     if (anchor(event.getBlockPlaced())) {
@@ -51,6 +65,7 @@ public final class ProtectionListener implements Listener {
       messages.fail(event.getPlayer(), "Ahí está el bloque protector de una protección.");
       return;
     }
+    if (manager.isClanBlock(event.getItemInHand())) return;
     var spec = manager.readProtectionBlock(event.getItemInHand());
     if (spec.isEmpty()) return;
     try {
@@ -140,6 +155,7 @@ public final class ProtectionListener implements Listener {
     event.setCancelled(true);
     Protection protection = value.get();
     Player player = event.getPlayer();
+    if (territories != null && territories.anchorBroken(player, protection)) return;
     if (!AccessPolicy.allows(player, protection, AccessPolicy.Action.DELETE)) {
       messages.fail(player, "Solo el creador o la administración pueden retirar este bloque.");
       return;
@@ -270,9 +286,11 @@ public final class ProtectionListener implements Listener {
       return;
     if (next == null) current.remove(player.getUniqueId());
     else current.put(player.getUniqueId(), next);
-    if (previous != null && next == null) messages.left(player, previous.name());
-    if (next != null)
-      messages.entered(player, next.name(), ProtectionDialogs.ownerName(next.primaryOwner()));
+    if (territories == null || !territories.crossed(player, previous, next)) {
+      if (previous != null && next == null) messages.left(player, previous.name());
+      if (next != null)
+        messages.entered(player, next.name(), ProtectionDialogs.ownerName(next.primaryOwner()));
+    }
     Bukkit.getPluginManager().callEvent(new ProtectionCrossedEvent(player, previous, next));
   }
 }

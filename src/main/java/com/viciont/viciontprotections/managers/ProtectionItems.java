@@ -41,6 +41,27 @@ public final class ProtectionItems {
     return item;
   }
 
+  /** Bloque de clan: las mismas medidas que un bloque protector, pero al colocarlo funda un clan. */
+  public ItemStack createClan(ProtectionBlock spec, int amount) {
+    ItemStack item = create(spec, amount);
+    var meta = item.getItemMeta();
+    meta.setDisplayName(Messages.color("&#B98CFF۞ <gradient:#FFE08A:#FFA94D>Bloque de clan</gradient>"));
+    meta.setLore(
+        List.of(
+            Messages.color("&#FFE08ATamaño: &#FFD36B" + spec.dimensions()),
+            Messages.color("&#FFF1CCColócalo sin estar en un clan para fundar el tuyo."),
+            Messages.color("&#CDB4F5Guía: &#FFD36B/clan guia")));
+    meta.getPersistentDataContainer().set(key("clan"), PersistentDataType.BYTE, (byte) 1);
+    item.setItemMeta(meta);
+    return item;
+  }
+
+  public boolean isClan(ItemStack item) {
+    return item != null
+        && item.hasItemMeta()
+        && item.getItemMeta().getPersistentDataContainer().has(key("clan"), PersistentDataType.BYTE);
+  }
+
   public Optional<ProtectionBlock> read(ItemStack item) {
     if (item == null || !item.getType().isBlock() || !item.hasItemMeta()) return Optional.empty();
     var meta = item.getItemMeta();
