@@ -194,7 +194,7 @@ public final class ChatViews {
         sender,
         "{texto}¿Eliminar {dato}"
             + p.name()
-            + "{texto}? La zona dejará de estar protegida y el bloque no se devuelve.");
+            + "{texto}? La zona dejará de estar protegida y el bloque protector vuelve a tu inventario.");
     messages.components(
         sender,
         false,

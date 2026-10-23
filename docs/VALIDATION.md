@@ -4,7 +4,7 @@ Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contr
 
 ## Pruebas automatizadas
 
-`mvn clean verify`: **25 pruebas**, sin fallos.
+`mvn clean verify`: **27 pruebas**, sin fallos.
 
 - Dimensiones exactas, bordes y límites inválidos.
 - Jerarquía de creador/propietario/miembro y permisos explícitos.
@@ -13,6 +13,7 @@ Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contr
 - Copia SQLite → base vacía sin repetir la importación de 1.x.
 - Paleta, degradados y prefijo `[Viciont Protections]`.
 - Conversión de diálogos a la API de Spigot (formularios, opciones, confirmación y botones sin acción).
+- Correcciones de 2.0.3–2.0.5: permisos de usuario opcionales, un solo botón en los diálogos sin acciones y devolución del bloque al eliminar.
 - Clanes:
   - Rangos en español con y sin acentos, y un único líder por clan.
   - Permisos por defecto, cambios del líder y bloqueos del servidor.
@@ -75,6 +76,11 @@ Comprobado:
   - Persistencia tras reiniciar.
   - Importación desde SQLite, y aviso sin importar cuando faltan zonas en MySQL.
 - API de clanes con un plugin de prueba: botones, líneas de estado, casillas, temas de guía, requisitos de fundación con reembolso y eventos.
+- Con las correcciones de 2.0.3–2.0.5:
+  - Un jugador sin permisos de LuckPerms funda un clan con `permissions.require-user-permissions: false`.
+  - Un bloque de clan no sirve para craftear.
+  - `/pr eliminar confirmar` devuelve el bloque protector.
+  - Los menús de clan sin botones muestran uno solo.
 - QuasoPlugin (Paper 26.2):
   - Depósito al fundar, con un intento sin fondos y otro con fondos.
   - Aportar y retirar según las casillas.

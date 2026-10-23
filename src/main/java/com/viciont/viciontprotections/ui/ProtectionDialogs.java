@@ -471,8 +471,8 @@ public class ProtectionDialogs {
     dialog.addProperty("can_close_with_escape", true);
     dialog.add("body", new JsonArray());
     body(dialog, "{texto}¿Eliminar {dato}" + p.name() + "{texto}?");
-    body(dialog, "{error}La zona dejará de estar protegida. El bloque protector no se devuelve.");
-    body(dialog, "{suave}Si quieres recuperar el bloque, rómpelo en lugar de eliminar la protección.");
+    body(dialog, "{error}La zona dejará de estar protegida.");
+    body(dialog, "{suave}El bloque protector se quita del suelo y vuelve a tu inventario.");
     dialog.add("yes", button("{error}✘ Sí, eliminar", null, root(p) + "eliminar confirmar"));
     dialog.add("no", button("{texto}Cancelar", null, root(p) + "menu"));
     return show(player, dialog);
@@ -576,9 +576,18 @@ public class ProtectionDialogs {
   }
 
   protected boolean show(Player player, JsonObject dialog) {
-    if (dialog.has("actions") && dialog.getAsJsonArray("actions").isEmpty())
-      add(dialog, "{texto}Cerrar", null, null);
+    withOneAction(dialog);
     return transport.show(player, dialog);
+  }
+
+  /**
+   * Un diálogo de varias acciones necesita al menos un botón. Si no tiene ninguno, su botón inferior
+   * pasa a ser ese botón; antes se añadía otro «Cerrar» y la guía salía con dos.
+   */
+  static void withOneAction(JsonObject dialog) {
+    if (!dialog.has("actions") || !dialog.getAsJsonArray("actions").isEmpty()) return;
+    if (dialog.has("exit_action")) dialog.getAsJsonArray("actions").add(dialog.remove("exit_action"));
+    else add(dialog, "{texto}Cerrar", null, null);
   }
 
   // ---------------------------------------------------------------- utilidades

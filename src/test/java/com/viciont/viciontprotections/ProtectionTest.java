@@ -9,7 +9,14 @@ import com.viciont.viciontprotections.models.Protection;
 import com.viciont.viciontprotections.security.AccessPolicy;
 import com.viciont.viciontprotections.ui.ProtectionDialogs;
 import java.util.*;
+import org.bukkit.Server;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.junit.jupiter.api.Test;
 
 class ProtectionTest {
@@ -115,5 +122,43 @@ class ProtectionTest {
     assertTrue(ProtectionDialogs.supportsVersion("1.21.6-R0.1-SNAPSHOT"));
     assertTrue(ProtectionDialogs.supportsVersion("26.2-R0.1-SNAPSHOT"));
     assertTrue(ProtectionDialogs.supportsVersion("26.2.build.129-stable"));
+  }
+
+  @Test
+  void userPermissionsFollowConfig() {
+    Permission create = permission("viciontprotections.user.create");
+    Permission users = permission("viciontprotections.user.*");
+    Permission give = permission("viciontprotections.admin.give");
+    FileConfiguration config = mock(FileConfiguration.class);
+    PluginManager manager = mock(PluginManager.class);
+    for (Permission p : List.of(create, users, give))
+      when(manager.getPermission(p.getName())).thenReturn(p);
+    Server server = mock(Server.class);
+    when(server.getPluginManager()).thenReturn(manager);
+    PluginDescriptionFile description = mock(PluginDescriptionFile.class);
+    when(description.getPermissions()).thenReturn(List.of(create, users, give));
+    Plugin plugin = mock(Plugin.class);
+    when(plugin.getConfig()).thenReturn(config);
+    when(plugin.getServer()).thenReturn(server);
+    when(plugin.getDescription()).thenReturn(description);
+
+    when(config.getBoolean("permissions.require-user-permissions", false)).thenReturn(false);
+    AccessPolicy.applyUserDefaults(plugin);
+    verify(create).setDefault(PermissionDefault.TRUE);
+    verify(users).setDefault(PermissionDefault.TRUE);
+    verify(give, never()).setDefault(any());
+
+    when(create.getDefault()).thenReturn(PermissionDefault.TRUE);
+    when(config.getBoolean("permissions.require-user-permissions", false)).thenReturn(true);
+    AccessPolicy.applyUserDefaults(plugin);
+    verify(create).setDefault(PermissionDefault.OP);
+    verify(give, never()).setDefault(any());
+  }
+
+  private Permission permission(String name) {
+    Permission p = mock(Permission.class);
+    when(p.getName()).thenReturn(name);
+    when(p.getDefault()).thenReturn(PermissionDefault.OP);
+    return p;
   }
 }

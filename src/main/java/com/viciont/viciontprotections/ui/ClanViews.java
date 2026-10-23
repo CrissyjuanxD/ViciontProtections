@@ -861,9 +861,11 @@ public final class ClanViews {
     dialog.addProperty("columns", screen.columns);
     var actions = new JsonArray();
     for (Screen.Button button : screen.buttons) actions.add(button(button));
-    if (actions.isEmpty()) actions.add(button(new Screen.Button("{texto}Cerrar", null, null, false, null)));
+    // Sin botones, el de abajo pasa a ser el único, como en los diálogos de protecciones
+    if (actions.isEmpty())
+      actions.add(button(screen.exit != null ? screen.exit : new Screen.Button("{texto}Cerrar", null, null, false, null)));
+    else if (screen.exit != null) dialog.add("exit_action", button(screen.exit));
     dialog.add("actions", actions);
-    if (screen.exit != null) dialog.add("exit_action", button(screen.exit));
     return dialog;
   }
 

@@ -34,7 +34,7 @@ Protecciones con WorldGuard, clanes con territorio y guerras, bloques personaliz
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
 3. Coloca `ViciontProtections-3.0.0.jar` en `plugins/` y reinicia el servidor.
-4. Configura permisos, `plugins/ViciontProtections/config.yml`, `messages.yml` y `clans.yml`.
+4. Configura `plugins/ViciontProtections/config.yml`, `messages.yml` y `clans.yml`. Los permisos son opcionales: sin plugin de permisos cualquier jugador puede usar las funciones de usuario y de clanes (consulta [Permisos y roles](#-permisos-y-roles)).
 
 PlaceholderAPI es opcional: si está instalado, se registran los marcadores de clan.
 
@@ -168,15 +168,15 @@ El banco, el mantenimiento diario, el depósito para fundar y las recompensas de
 
 | Permiso | Por defecto | Función |
 | --- | --- | --- |
-| `viciontprotections.clan.*` | OP | `clan.use` y `clan.create` |
-| `viciontprotections.clan.use` | OP | Usar `/clan` y `/cc` según el rango en cada clan |
-| `viciontprotections.clan.create` | OP | Fundar un clan colocando un bloque de clan |
+| `viciontprotections.clan.*` | Todos | `clan.use` y `clan.create` |
+| `viciontprotections.clan.use` | Todos | Usar `/clan` y `/cc` según el rango en cada clan |
+| `viciontprotections.clan.create` | Todos | Fundar un clan colocando un bloque de clan |
 | `viciontprotections.admin.clan.*` | OP | Las tres de administración de clanes |
 | `viciontprotections.admin.clan.spy` | OP | `/clan espiar` |
 | `viciontprotections.admin.clan.manage` | OP | `/clan admin`: miembros, rangos, varios clanes, nombre, color y disolver |
 | `viciontprotections.admin.clan.war` | OP | `/clan admin guerra terminar` |
 
-Para jugadores, con LuckPerms: `/lp group default permission set viciontprotections.clan.* true`. Los nodos de administración están bajo `admin.clan.*` para que `clan.*` no los conceda; `viciontprotections.admin.*` los incluye.
+Los permisos de clan de los jugadores siguen la opción `permissions.require-user-permissions`, igual que los de usuario: con `false` (por defecto) son de todos, y con `true` solo de OP y hay que concederlos, por ejemplo con `/lp group default permission set viciontprotections.clan.* true`. Los nodos de administración están bajo `admin.clan.*` para que `clan.*` no los conceda; siempre son de OP y `viciontprotections.admin.*` los incluye.
 
 ### clans.yml y PlaceholderAPI
 
@@ -234,11 +234,23 @@ El sistema de intercambios de aldeanos y `/prvillager` se han retirado.
 
 ## ۞ Permisos y roles
 
-**Todos los permisos de gestión tienen `default: op`.** La guía y la ayuda son públicas. Para permitir el uso normal a jugadores, concede el grupo de permisos de usuario; por ejemplo, con LuckPerms:
+**Por defecto, los permisos de usuario y de clanes son de todos**: cualquier jugador puede colocar bloques protectores, gestionar sus protecciones y usar los clanes sin plugin de permisos. Los de administración (`viciontprotections.admin.*`) son solo de OP. La guía y la ayuda son públicas.
+
+Se controla en `config.yml`:
+
+```yaml
+permissions:
+  require-user-permissions: false
+```
+
+Con `true`, los permisos de usuario y de clanes pasan a ser solo de OP y hay que concederlos con un plugin de permisos; por ejemplo, con LuckPerms:
 
 ```text
 /lp group default permission set viciontprotections.user.* true
+/lp group default permission set viciontprotections.clan.* true
 ```
+
+El cambio se aplica al arrancar y con `/pr recargar`. Con cualquiera de los dos valores, un plugin de permisos puede seguir dando o quitando permisos concretos.
 
 Los permisos Bukkit habilitan la función; el rol dentro de la protección determina sobre qué protección puedes usarla.
 
@@ -321,14 +333,14 @@ Las tablas de MySQL/MariaDB se crean en `utf8mb4`, así que los nombres con acen
 
 ### Desde 2.0.x
 
-Reemplaza el JAR y reinicia. Antes de crear las tablas de clanes, el plugin guarda una copia de la base: `protections-pre-clanes.db` con SQLite, o tablas `*_pre_clanes` con MySQL. Los territorios de los clanes siguen siendo protecciones normales, con el líder como creador, los sublíderes como propietarios y el resto como miembros, así que volver al JAR 2.0.2 conserva las zonas y sus accesos.
+Reemplaza el JAR y reinicia. Antes de crear las tablas de clanes, el plugin guarda una copia de la base: `protections-pre-clanes.db` con SQLite, o tablas `*_pre_clanes` con MySQL. Los territorios de los clanes siguen siendo protecciones normales, con el líder como creador, los sublíderes como propietarios y el resto como miembros, así que volver a un JAR 2.0.x conserva las zonas y sus accesos.
 
 ### Desde 1.x
 
 1. Detén el servidor y guarda una copia de las carpetas de ViciontProtections y WorldGuard.
 2. Instala WorldEdit/WorldGuard compatibles y reemplaza el JAR del plugin.
 3. Arranca y revisa la consola. El importador conserva las tablas antiguas; con SQLite también crea `protections-pre-2.0.db` una sola vez. Las secciones `messages` y `villager` de tu `config.yml` antiguo se retiran (los mensajes ahora están en `messages.yml`) y se guarda una copia en `config-1.x-anterior.yml`.
-4. Comprueba tus regiones y concede los nuevos permisos de usuario a tus grupos.
+4. Comprueba tus regiones. Los jugadores conservan el acceso a las funciones de usuario como en 1.x, salvo que actives `permissions.require-user-permissions`.
 
 La migración conserva creador, propietarios, miembros y **los límites inclusivos originales**: una protección antigua configurada como 32 abarcaba 33 bloques y seguirá abarcándolos. Los bloques ya entregados con los tres CustomModelData antiguos siguen siendo reconocidos. Las protecciones sin nombre reciben uno automáticamente.
 

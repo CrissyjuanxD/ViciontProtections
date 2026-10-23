@@ -1,6 +1,8 @@
 # Cambios
 
-## 3.0.0: Viciont Clans
+## 3.0.0
+
+Viciont Clans llega a ViciontProtections. Incluye también las correcciones de 2.0.3, 2.0.4 y 2.0.5.
 
 ### Clanes
 
@@ -30,7 +32,7 @@
   - Llevan una crónica de bajas, un tiempo de espera entre guerras y protección para clanes nuevos.
 - Menús de clan en diálogos (1.21.6+) y en el chat con botones, con la paleta amarillo pastel, dorado y naranja con toques morados y el prefijo `[Viciont Clans]`.
 - Guía de clanes por temas en `/clan guia`, ampliable por plugins y enlazada con la de protecciones.
-- Panel `/clan admin` para gestionar cualquier clan y cerrar guerras. Permisos `viciontprotections.clan.*` y `viciontprotections.admin.clan.*`.
+- Panel `/clan admin` para gestionar cualquier clan y cerrar guerras. Permisos `viciontprotections.clan.*`, que siguen `permissions.require-user-permissions` como los de usuario (de todos por defecto), y `viciontprotections.admin.clan.*`, solo de OP.
 - Marcadores de PlaceholderAPI: `%viciont_clan%`, `_nombre`, `_rango`, `_color` y `_guerra`.
 
 ### API
@@ -42,8 +44,32 @@
 ### Datos
 
 - Siete tablas nuevas de clanes con el mismo prefijo. Antes de crearlas se guarda una copia, `protections-pre-clanes.db` o tablas `*_pre_clanes`.
-- Los territorios siguen siendo protecciones con sus roles sincronizados, así que volver a 2.0.2 conserva las zonas y sus accesos.
+- Los territorios siguen siendo protecciones con sus roles sincronizados, así que volver a 2.0.x conserva las zonas y sus accesos.
 - Al pasar de SQLite a MySQL se copian también los clanes.
+
+## 2.0.5
+
+### Correcciones
+
+- Eliminar una protección desde el menú (o con `/pr eliminar confirmar`) seguía sin devolver el bloque protector en 2.0.4: el bloque ya se había quitado del suelo cuando se comprobaba. Ahora se comprueba antes de eliminar y el bloque vuelve al inventario.
+- El bloqueo de crafteos solo mira los huecos de entrada: comprar un bloque protector a un aldeano o sacar lo ya fundido de un horno ya no se bloquea por error. También se tapan el yunque, la mesa de cartografía y los aldeanos, y el horno no gasta combustible intentando fundir un bloque protector.
+
+## 2.0.4
+
+### Correcciones
+
+- Al eliminar una protección desde el menú (o con `/pr eliminar confirmar`) el bloque protector se quedaba puesto como bloque normal y no se devolvía. Ahora se quita del suelo y vuelve al inventario de quien la elimina (en creativo solo se quita; desde la consola cae en su sitio). Solo se devuelve si el bloque seguía puesto, así no se puede duplicar.
+- Los bloques protectores ya no sirven para craftear ni fundir: mesa de crafteo, crafter, herrería, cortapiedras, piedra de afilar, telar y hornos los rechazan. Antes, por ejemplo, un bloque protector de netherite daba 9 lingotes de netherite.
+
+## 2.0.3
+
+### Novedades
+
+- Opción `permissions.require-user-permissions` en `config.yml`, desactivada por defecto: así cualquier jugador puede colocar bloques protectores y gestionar sus protecciones sin plugin de permisos, como en 1.x. Con `true`, los permisos `viciontprotections.user.*` vuelven a ser solo de OP. Se aplica al arrancar y con `/pr recargar`; los de administración siguen siendo de OP.
+
+### Correcciones
+
+- La guía de `/proteccion` mostraba dos botones «Cerrar» a quien no tenía protecciones ni el permiso de listar.
 
 ## 2.0.2
 
