@@ -1,10 +1,10 @@
-# Validación de ViciontProtections 2.0.2
+# Validación de ViciontProtections 3.0.0
 
 Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contra la API de Spigot 1.21 con bytecode Java 21 y no usa clases NMS. La API de diálogos de Spigot 1.21.6+ se carga solo cuando el servidor la incluye.
 
 ## Pruebas automatizadas
 
-`mvn clean verify`: **17 pruebas**, sin fallos.
+`mvn clean verify`: **25 pruebas**, sin fallos.
 
 - Dimensiones exactas, bordes y límites inválidos.
 - Jerarquía de creador/propietario/miembro y permisos explícitos.
@@ -13,8 +13,75 @@ Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contr
 - Copia SQLite → base vacía sin repetir la importación de 1.x.
 - Paleta, degradados y prefijo `[Viciont Protections]`.
 - Conversión de diálogos a la API de Spigot (formularios, opciones, confirmación y botones sin acción).
+- Clanes:
+  - Rangos en español con y sin acentos, y un único líder por clan.
+  - Permisos por defecto, cambios del líder y bloqueos del servidor.
+  - Lectura de `clans.yml`.
+  - Copia `protections-pre-clanes.db` una sola vez.
+  - Ida y vuelta de clanes, solicitudes y guerras.
+  - Copias de clanes disueltos y su caducidad.
+  - Copia de clanes de SQLite a una base vacía.
 
-## Servidores reales
+## Clanes en servidores reales (3.0.0)
+
+Los clanes se recorrieron con varios clientes automáticos (mineflayer) a la vez. Se comprobaron los diálogos recibidos, el chat, la action bar, las entidades de texto y el daño entre jugadores.
+
+| Servidor | Java | Clanes | Notas |
+| --- | --- | --- | --- |
+| Paper 1.21.8 | 21 | Diálogos | LuckPerms sin OP, plugin de prueba de la API |
+| Paper 1.21.1 | 21 | Chat con botones | Sin diálogos |
+| Spigot 1.21.8 (BuildTools) | 21 | Diálogos de Spigot | |
+| Paper 26.2 | 25 | Diálogos | QuasoPlugin con el banco de clanes, MariaDB |
+
+Comprobado:
+
+- Fundación:
+  - Entregar bloques de clan, colocarlos y fundar con nombre y color.
+  - Nombres repetidos o inválidos.
+  - El bloque vuelve al inventario al cancelar o caducar.
+  - Solo el líder rompe el bloque, y la disolución pide confirmación y devuelve el bloque.
+- Miembros:
+  - Invitaciones, aceptar y rechazar, caducidad y expulsiones.
+  - Ascensos y degradaciones respetando el rango.
+  - Transferencia del liderazgo, salida y disolución.
+  - Límite de miembros.
+- Permisos por rango dentro de los territorios (construir, cofres, puertas y animales), con cambios del líder en `/clan permisos` y casillas bloqueadas por el servidor.
+- Territorios:
+  - Aportar al momento o por solicitud, aceptar, rechazar y devolver con los roles anteriores.
+  - Bloqueo de `/pr` sobre las zonas del clan.
+  - Banderas comunes, límites con partículas y avisos al entrar y salir.
+- Chat:
+  - `/cc` y modo clan.
+  - Etiqueta en el chat público.
+  - Espía, registro en consola y archivo diario.
+- Nombre del clan sobre el nick, con la variante ⚔ en guerra. No se ve sobre uno mismo y se oculta en espectador, invisible o con pasajeros. La altura se ajusta con `BELOW_NAME`.
+- Guerras:
+  - Declarar con motivo y preaviso.
+  - PvP con la bandera `pvp` de WorldGuard denegada.
+  - Bajas en la crónica.
+  - Paz con contraoferta, rendición con tributo y cierre por la administración.
+  - Espera entre guerras, protección de clanes nuevos y veto desde otro plugin.
+- Cambio de bloque de clan de 15 × 15 a 25 × 25, con el centro en el bloque nuevo y en el mismo sitio. El territorio se mueve o crece, el bloque antiguo vuelve al inventario y se conservan miembros, rangos y banco. Si la zona choca con otra región, el cambio sigue pendiente.
+- Copias de clanes disueltos:
+  - Al colocar un bloque de clan, el líder elige entre fundar uno nuevo o recuperar el anterior.
+  - La recuperación conserva miembros, rangos, permisos y saldo del banco, y no cobra depósito.
+  - Los clanes disueltos por impago no guardan copia.
+- Varios clanes por administración y `/clan activo`.
+- Panel `/clan admin`.
+- Permisos `clan.*` sin acceso a la administración.
+- Uso desde consola.
+- Datos:
+  - MariaDB 10.11: tablas de clanes y copia `*_pre_clanes`.
+  - Persistencia tras reiniciar.
+  - Importación desde SQLite, y aviso sin importar cuando faltan zonas en MySQL.
+- API de clanes con un plugin de prueba: botones, líneas de estado, casillas, temas de guía, requisitos de fundación con reembolso y eventos.
+- QuasoPlugin (Paper 26.2):
+  - Depósito al fundar, con un intento sin fondos y otro con fondos.
+  - Aportar y retirar según las casillas.
+  - Recompensa de rendición y deuda de guerra con veto a nuevas declaraciones.
+  - Cobro y aviso del mantenimiento, y disolución por impago sin copia.
+
+## Protecciones en servidores reales (2.0.2)
 
 Cada servidor se arrancó con WorldEdit y WorldGuard y se recorrieron los comandos con clientes automáticos (mineflayer) conectados como jugadores, comprobando los mensajes de chat, la action bar, el contenido de cada diálogo recibido y los paquetes de partículas.
 
@@ -39,4 +106,4 @@ Comprobado:
 
 ## Pendiente de revisión manual
 
-Los clientes automáticos no dibujan la interfaz: falta ver con un cliente real el aspecto de los diálogos y de las partículas. No se probó Oracle MySQL ni cada versión intermedia entre 1.21.1 y 26.2.
+Los clientes automáticos no dibujan la interfaz: falta ver con un cliente real el aspecto de los diálogos, las partículas y el nombre del clan sobre el nick. No se probó Oracle MySQL, PlaceholderAPI con los marcadores de clan ni cada versión intermedia entre 1.21.1 y 26.2. Las guerras se probaron con plazos acortados en `clans.yml`.

@@ -92,23 +92,33 @@ public final class Messages {
     } catch (IOException error) {
       throw new IllegalStateException(error);
     }
-    Map<String, String> colors = new HashMap<>(DEFAULT_PALETTE);
-    var section = messages.getConfigurationSection("colores");
+    palette = palette(messages.getConfigurationSection("colores"), DEFAULT_PALETTE);
+  }
+
+  /** Lee una paleta {@code clave: '#RRGGBB'} sobre unos valores por defecto. */
+  public static Map<String, String> palette(
+      org.bukkit.configuration.ConfigurationSection section, Map<String, String> defaults) {
+    Map<String, String> colors = new HashMap<>(defaults);
     if (section != null)
       for (String key : section.getKeys(false)) {
         String value = section.getString(key, "").trim().replace("#", "");
         if (value.matches("[a-fA-F0-9]{6}")) colors.put(key.toLowerCase(Locale.ROOT), value);
       }
-    palette = Map.copyOf(colors);
+    return Map.copyOf(colors);
   }
 
   /** Traduce paleta, degradados y colores hex/clásicos a texto con formato de Minecraft. */
   public static String color(String value) {
+    return color(value, palette);
+  }
+
+  /** Igual que {@link #color(String)} con otra paleta, como la de los clanes. */
+  public static String color(String value, Map<String, String> colors) {
     if (value == null) return "";
     Matcher token = TOKEN.matcher(value);
     StringBuilder tokens = new StringBuilder();
     while (token.find()) {
-      String hex = palette.get(token.group(1));
+      String hex = colors.get(token.group(1));
       token.appendReplacement(
           tokens, Matcher.quoteReplacement(hex == null ? token.group() : "&#" + hex));
     }
@@ -240,7 +250,11 @@ public final class Messages {
 
   /** Texto con formato convertido a componentes para combinarlo con botones. */
   public static TextComponent component(String value) {
-    return new TextComponent(TextComponent.fromLegacyText(color(value)));
+    return component(value, palette);
+  }
+
+  public static TextComponent component(String value, Map<String, String> colors) {
+    return new TextComponent(TextComponent.fromLegacyText(color(value, colors)));
   }
 
   /**
@@ -248,7 +262,12 @@ public final class Messages {
    * de chat para completarlo. Las URL se abren directamente.
    */
   public static TextComponent button(String label, String hover, String target, boolean run) {
-    TextComponent button = component(label);
+    return button(label, hover, target, run, palette);
+  }
+
+  public static TextComponent button(
+      String label, String hover, String target, boolean run, Map<String, String> colors) {
+    TextComponent button = component(label, colors);
     if (target != null) {
       ClickEvent.Action action =
           target.startsWith("https://")
@@ -259,7 +278,8 @@ public final class Messages {
     if (hover != null && !hover.isEmpty())
       button.setHoverEvent(
           new HoverEvent(
-              HoverEvent.Action.SHOW_TEXT, new Text(TextComponent.fromLegacyText(color(hover)))));
+              HoverEvent.Action.SHOW_TEXT,
+              new Text(TextComponent.fromLegacyText(color(hover, colors)))));
     return button;
   }
 

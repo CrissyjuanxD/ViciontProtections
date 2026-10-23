@@ -19,6 +19,35 @@ public final class AccessPolicy {
 
   private AccessPolicy() {}
 
+  /**
+   * Protecciones que son territorio de un clan: su acceso lo gestionan los rangos del clan, así que
+   * aquí no se pueden añadir ni quitar miembros, transferir ni eliminar.
+   */
+  private static volatile java.util.function.Function<java.util.UUID, String> territory = id -> null;
+
+  /** Recibe el nombre del clan dueño de cada protección, o null si no es territorio. */
+  public static void setTerritories(java.util.function.Function<java.util.UUID, String> clanName) {
+    territory = clanName == null ? id -> null : clanName;
+  }
+
+  public static boolean isTerritory(Protection protection) {
+    return clanOf(protection) != null;
+  }
+
+  /** Nombre del clan si la protección es territorio de uno. */
+  public static String clanOf(Protection protection) {
+    return territory.apply(protection.id());
+  }
+
+  /** Acciones que se gestionan desde /clan cuando la protección es territorio de un clan. */
+  public static boolean lockedByClan(Protection protection, Action action) {
+    return (action == Action.MEMBERS
+            || action == Action.OWNERS
+            || action == Action.DELETE
+            || action == Action.TRANSFER)
+        && isTerritory(protection);
+  }
+
   public static String permission(Action action) {
     return switch (action) {
       case INFO -> "viciontprotections.user.info";
@@ -33,6 +62,7 @@ public final class AccessPolicy {
   }
 
   public static boolean allows(CommandSender sender, Protection protection, Action action) {
+    if (lockedByClan(protection, action)) return false;
     if (sender.hasPermission("viciontprotections.admin.manage")) return true;
     if (!(sender instanceof Player player) || !sender.hasPermission(permission(action)))
       return false;

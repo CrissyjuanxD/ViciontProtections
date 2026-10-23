@@ -20,6 +20,7 @@ import org.bukkit.entity.Player;
 public final class WorldGuardBridge {
   private static StringFlag managed;
   private String denyMessage = "&#B07CFF۞ &#FF8FB8No tienes permiso para hacer eso en esta protección.";
+  private java.util.function.Function<Protection, String> denyOverride = p -> null;
 
   public static void registerFlag() {
     var registry = WorldGuard.getInstance().getFlagRegistry();
@@ -37,6 +38,14 @@ public final class WorldGuardBridge {
   /** Mensaje que WorldGuard muestra al denegar una acción; admite los colores de messages.yml. */
   public void setDenyMessage(String message) {
     if (message != null && !message.isBlank()) denyMessage = message;
+  }
+
+  /**
+   * Mensaje propio para algunas protecciones, como los territorios de clan (ya con colores). Si
+   * devuelve null se usa el general.
+   */
+  public void setDenyOverride(java.util.function.Function<Protection, String> override) {
+    denyOverride = override == null ? p -> null : override;
   }
 
   public RegionManager manager(World world) {
@@ -64,6 +73,11 @@ public final class WorldGuardBridge {
   }
 
   public void validate(CreateProtectionRequest request, Player actor) {
+    validate(request, actor, null);
+  }
+
+  /** Como {@link #validate(CreateProtectionRequest, Player)}, sin contar la región {@code ignored}. */
+  public void validate(CreateProtectionRequest request, Player actor, String ignored) {
     World world = Bukkit.getWorld(request.worldName());
     RegionManager manager = manager(world);
     Bounds bounds = request.bounds();
@@ -78,7 +92,7 @@ public final class WorldGuardBridge {
       throw new ProtectionException("La protección supera el borde del mundo.");
     var candidate = region("vp_pending", bounds);
     for (ProtectedRegion other : manager.getApplicableRegions(candidate)) {
-      if (!other.getId().equals("__global__"))
+      if (!other.getId().equals("__global__") && !other.getId().equals(ignored))
         throw new ProtectionException(
             "La zona se cruza con otra región protegida: " + other.getId() + ".");
     }
@@ -126,7 +140,10 @@ public final class WorldGuardBridge {
             Flags.FIRE_SPREAD,
             Flags.LAVA_FIRE,
             Flags.ENDER_BUILD)) region.setFlag(flag, StateFlag.State.DENY);
-    region.setFlag(Flags.DENY_MESSAGE, com.viciont.viciontprotections.ui.Messages.color(denyMessage));
+    String deny = denyOverride.apply(protection);
+    region.setFlag(
+        Flags.DENY_MESSAGE,
+        deny != null ? deny : com.viciont.viciontprotections.ui.Messages.color(denyMessage));
     for (var entry : protection.flags().entrySet())
       region.setFlag(stateFlag(entry.getKey()), StateFlag.State.valueOf(entry.getValue()));
     manager.addRegion(region);

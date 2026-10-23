@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.*;
 import org.bukkit.*;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -64,6 +65,21 @@ public final class ProtectionManager implements ViciontProtectionsApi {
     return items.read(item);
   }
 
+  public ItemStack createClanBlock(ProtectionBlock block, int amount) {
+    requireMain();
+    return items.createClan(block, amount);
+  }
+
+  public boolean isClanBlock(ItemStack item) {
+    return items.isClan(item);
+  }
+
+  /** Vuelve a escribir la región de WorldGuard, por ejemplo para cambiar su mensaje de denegación. */
+  public void reapply(Protection protection) {
+    requireMain();
+    if (!pending.contains(protection.id())) guard.apply(protection);
+  }
+
   public Optional<Protection> getProtection(UUID id) {
     return Optional.ofNullable(protections.get(id));
   }
@@ -98,7 +114,8 @@ public final class ProtectionManager implements ViciontProtectionsApi {
   }
 
   private void put(Protection p) {
-    protections.put(p.id(), p);
+    Protection previous = protections.put(p.id(), p);
+    if (previous != null && key(previous) != null) anchors.remove(key(previous), p.id());
     if (key(p) != null) anchors.put(key(p), p.id());
   }
 
@@ -257,6 +274,55 @@ public final class ProtectionManager implements ViciontProtectionsApi {
           owners.add(p.primaryOwner());
           owners.remove(target);
           return p.withRoles(target, owners, members);
+        });
+  }
+
+  /**
+   * Sustituye creador, propietarios, miembros y banderas en un solo cambio. Lo usan los clanes para
+   * reflejar sus rangos en los territorios y para devolver una protección a quien la aportó.
+   */
+  public CompletableFuture<Protection> setAccess(
+      UUID id, UUID creator, Set<UUID> owners, Set<UUID> members, Map<String, String> flags) {
+    return change(
+        id,
+        p -> {
+          var newOwners = new HashSet<>(owners);
+          newOwners.remove(creator);
+          var newMembers = new HashSet<>(members);
+          newMembers.remove(creator);
+          newMembers.removeAll(newOwners);
+          return p.withRoles(creator, newOwners, newMembers).withFlags(flags);
+        });
+  }
+
+  /**
+   * Lleva la protección a otro bloque y tamaño en el mismo mundo, conservando su ID, nombre,
+   * accesos y banderas. Lo usan los clanes para cambiar su bloque de clan sin disolverse. El
+   * bloque antiguo queda en el mundo: lo retira quien llama.
+   */
+  public CompletableFuture<Protection> relocate(UUID id, Bounds bounds, Anchor anchor, Player actor) {
+    return main(
+        () -> {
+          Protection old = required(id);
+          if (anchor != null && !bounds.contains(anchor.x(), anchor.y(), anchor.z()))
+            throw new ProtectionException("El bloque debe estar dentro de la nueva zona.");
+          guard.validate(
+              new CreateProtectionRequest(old.primaryOwner(), old.worldName(), bounds, old.name(), anchor),
+              actor,
+              old.regionId());
+          return persist(
+              old,
+              new Protection(
+                  old.id(),
+                  old.name(),
+                  old.worldName(),
+                  bounds,
+                  old.primaryOwner(),
+                  old.owners(),
+                  old.members(),
+                  old.flags(),
+                  anchor,
+                  old.createdAt()));
         });
   }
 

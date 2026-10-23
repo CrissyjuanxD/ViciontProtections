@@ -167,6 +167,9 @@ public class ProtectionDialogs {
             + " {suave}· Tamaño: {dato}"
             + size(p));
     body(dialog, "{suave}" + place(p) + " {suave}· {dato}#" + p.shortId());
+    String clan = AccessPolicy.clanOf(p);
+    if (clan != null)
+      body(dialog, "{titulo}⚑ {texto}Territorio del clan {dato}" + clan + "{texto}: el acceso depende de los rangos del clan.");
     String root = root(p);
     boolean owner = p.isOwner(id);
     if (allows(player, p, Action.MEMBERS)) {
@@ -196,6 +199,8 @@ public class ProtectionDialogs {
       add(dialog, "{worldguard}⚑ {texto}Banderas de WorldGuard", "{suave}Solo administración", root + "formulario bandera");
     if (allows(player, p, Action.TRANSFER))
       add(dialog, "{admin}⇄ {texto}Transferir creador", "{suave}Solo administración", root + "formulario transferir");
+    if (clan != null && player.hasPermission("viciontprotections.clan.use"))
+      add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Rangos, chat, territorios y guerras", "/clan");
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
     // La guía siempre queda debajo de todo, como botón inferior del diálogo.
@@ -419,7 +424,7 @@ public class ProtectionDialogs {
         return show(player, dialog);
       }
       case "dar" -> {
-        dialog = base("Entregar bloque protector");
+        dialog = base("Entregar bloque protector o de clan");
         notice(dialog, notice);
         body(
             dialog,
@@ -431,10 +436,16 @@ public class ProtectionDialogs {
         text(dialog, "profundidad", "Profundidad (Z)", "32", 7);
         text(dialog, "altura", "Altura", "todo", 7);
         text(dialog, "cantidad", "Cantidad", "1", 2);
+        options(
+            dialog,
+            "tipo",
+            "Tipo",
+            List.of(new String[] {"protector", "Bloque protector"}, new String[] {"clan", "Bloque de clan"}));
         addDynamic(
             dialog,
             "{admin}✦ {texto}Entregar",
-            "/pr dar $(jugador) $(bloque) $(ancho) $(profundidad) $(altura) $(cantidad) " + FROM_DIALOG);
+            "/pr dar $(jugador) $(bloque) $(ancho) $(profundidad) $(altura) $(cantidad) $(tipo) "
+                + FROM_DIALOG);
         dialog.add("exit_action", button("{titulo}◀ {texto}Volver", null, back));
         return show(player, dialog);
       }
@@ -557,6 +568,11 @@ public class ProtectionDialogs {
   private static JsonArray inputs(JsonObject dialog) {
     if (!dialog.has("inputs")) dialog.add("inputs", new JsonArray());
     return dialog.getAsJsonArray("inputs");
+  }
+
+  /** Para otras vistas del paquete (clanes): muestra un diálogo ya construido. */
+  boolean showJson(Player player, JsonObject dialog) {
+    return transport.show(player, dialog);
   }
 
   protected boolean show(Player player, JsonObject dialog) {

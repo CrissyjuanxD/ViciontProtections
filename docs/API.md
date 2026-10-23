@@ -1,4 +1,4 @@
-# API de ViciontProtections 2.0.2
+# API de ViciontProtections 3.0.0
 
 La API permite integrar tiendas, recompensas, generación de parcelas y otros sistemas sin ejecutar comandos ni escribir SQL. Los tipos públicos están en `com.viciont.viciontprotections.api`; `Protection` es un registro inmutable en `com.viciont.viciontprotections.models`.
 
@@ -7,14 +7,14 @@ La API permite integrar tiendas, recompensas, generación de parcelas y otros si
 Compila contra el JAR de ViciontProtections con alcance `provided`. Si lo instalas en tu repositorio Maven local:
 
 ```bash
-mvn install:install-file -Dfile=ViciontProtections-2.0.2.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=2.0.2 -Dpackaging=jar
+mvn install:install-file -Dfile=ViciontProtections-3.0.0.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=3.0.0 -Dpackaging=jar
 ```
 
 ```xml
 <dependency>
     <groupId>com.viciont</groupId>
     <artifactId>ViciontProtections</artifactId>
-    <version>2.0.2</version>
+    <version>3.0.0</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -134,3 +134,101 @@ public void beforeProtectionChange(ProtectionChangingEvent event) {
 ```
 
 No esperes futuros ni provoques cambios recursivos sobre la misma protección dentro de este evento. Usa `ProtectionChangedEvent` para reaccionar a una escritura confirmada.
+
+## Clanes
+
+Desde la 3.0.0, Viciont Clans publica un segundo servicio, `ViciontClansApi`, en `com.viciont.viciontprotections.api.clan`. Con él otro plugin puede añadir un banco, cobrar un depósito al fundar o pagar recompensas de guerra sin tocar las tablas de clanes. Los tipos (`Clan`, `ClanMember`, `ClanRank`, `ClanTerritory`, `ClanWar`) son registros inmutables.
+
+```java
+ViciontClansApi clans = Bukkit.getServicesManager().load(ViciontClansApi.class);
+```
+
+### Consultas
+
+| Método | Resultado |
+| --- | --- |
+| `getClans()` · `getClan(UUID)` · `getClanByName(String)` | Clanes del servidor |
+| `getPlayerClan(UUID jugador)` | Clan que muestra el jugador |
+| `getPlayerClans(UUID jugador)` | Todos sus clanes (más de uno solo si lo puso la administración) |
+| `getClanAt(Location)` | Clan dueño del territorio en esa posición; hilo principal |
+| `getRank(clan, jugador)` · `getRankName(ClanRank)` | Rango y su nombre visible en `clans.yml` |
+| `hasPermission(clan, jugador, casilla)` | Casilla del rango del jugador, contando los ajustes del líder y los bloqueos del servidor |
+| `getPermissions()` | Casillas del plugin y de las extensiones |
+| `getWar(clan)` · `getWars(clan)` | Guerra activa e historial |
+
+Los rangos, de menor a mayor, son `GUEST`, `APPRENTICE`, `OFFICER`, `CO_LEADER` y `LEADER`. `ClanRank#isAtLeast` sirve para comparar.
+
+### Acciones
+
+| Método | Efecto |
+| --- | --- |
+| `createClanBlock(ProtectionBlock, cantidad)` · `isClanBlock(ItemStack)` | Bloques de clan para tiendas; hilo principal |
+| `foundClan(fundador, nombre, color, CreateProtectionRequest)` | Fundar sin requisitos de fundación |
+| `disbandClan(clan, motivo)` | Disolver y guardar una copia recuperable durante `clanes.copia-dias` |
+| `disbandClan(clan, motivo, true)` | Disolver por impago: no se guarda copia |
+| `invite` · `addMember` · `removeMember` · `setRank` | Gestionar miembros |
+| `addTerritory(clan, protección)` | Pasar una protección al clan |
+| `broadcast(clan, mensaje)` | Aviso en el chat del clan con su formato |
+| `setWarReward(guerra, texto)` | Anotar en la ficha de una guerra lo que se pagó |
+
+Las acciones devuelven `CompletableFuture` y siguen las mismas reglas de hilos que las mutaciones de protecciones. Igual que la API de protecciones, no comprueban permisos Bukkit ni cobros: eso es cosa de tu integración.
+
+### Extensiones
+
+Registra las extensiones en `onEnable`. Se retiran solas cuando tu plugin se desactiva, o al llamar a `unregisterAll(plugin)`.
+
+```java
+// Botón del menú del clan para aprendices o superiores (sin casilla de permiso: null).
+clans.registerButton(this, new ClanButton("banco", "{dato}Banco del clan",
+        "Saldo, aportaciones y deudas", ClanRank.APPRENTICE, null, "/clanbanco"));
+
+// Casilla en /clan permisos, activada por defecto para oficiales y sublíderes.
+clans.registerPermission(this, new ClanPermission("banco-retirar", "Retirar del banco",
+        "Sacar DinoCoins del banco", Set.of(ClanRank.OFFICER, ClanRank.CO_LEADER)));
+
+// Línea en la ficha del clan.
+clans.registerStatusLine(this, "saldo", (clan, viewer) -> "{texto}Banco: {dato}" + saldo(clan.id()));
+
+// Página en /clan guia.
+clans.registerGuideTopic(this, "banco", "Banco del clan", List.of("{texto}Cada clan tiene un banco..."));
+
+// Depósito al fundar: se cobra antes de crear el clan y se devuelve si la fundación falla.
+clans.registerFoundingRequirement(this, new FoundingRequirement() {
+    public String describe(Player founder) { return "Depósito inicial: 10 DinoCoins"; }
+    public CompletableFuture<Void> charge(Player founder, String clanName) { return cobrar(founder, 10); }
+    public void refund(Player founder, String clanName) { devolver(founder, 10); }
+});
+```
+
+Los requisitos de fundación se piden en orden de registro. Si uno falla, los anteriores reciben `refund` y el jugador conserva su bloque de clan. Recuperar una copia o cambiar el bloque de clan no vuelve a cobrar.
+
+### Eventos de clanes
+
+Están en `com.viciont.viciontprotections.api.event.clan` y llegan en el hilo principal, salvo `ClanChatEvent`.
+
+| Evento | Momento |
+| --- | --- |
+| `ClanFoundEvent` | Antes de fundar; `cancel(mensaje)` lo impide y muestra el motivo |
+| `ClanDisbandEvent` | Antes de disolver; `getCause()`: `LEADER`, `BLOCK_BROKEN`, `ADMIN`, `PLUGIN`, `HOME_LOST` o `UNPAID`. Solo se cancelan las dos primeras (`isForced()`) |
+| `ClanMemberEvent` | Antes de `JOIN`, `LEAVE`, `KICK`, `RANK` o `LEADER`; cancelable |
+| `ClanWarEvent` | `DECLARE` (cancelable con `cancel(mensaje)`), `START` y `END` con el final ya guardado en `getWar()` |
+| `ClanChangedEvent` | Después de guardar cualquier cambio; `getPrevious()` y `getCurrent()` (`null` al fundar o disolver) |
+| `ClanChatEvent` | Mensaje del chat del clan; puede llegar fuera del hilo principal, cancelable y editable |
+
+Por ejemplo, para impedir que un clan con deudas declare una guerra y pagar al ganador de una rendición:
+
+```java
+@EventHandler
+public void onWar(ClanWarEvent event) {
+    ClanWar war = event.getWar();
+    if (event.getType() == ClanWarEvent.Type.DECLARE && tieneDeuda(war.attacker())) {
+        event.cancel("Tu clan tiene una deuda de guerra pendiente.");
+    }
+    if (event.getType() == ClanWarEvent.Type.END && war.ending() == ClanWar.Ending.SURRENDER) {
+        int pagado = pagar(war.winner(), war.tribute());
+        clans.setWarReward(war.id(), pagado + " DinoCoins");
+    }
+}
+```
+
+Para disolver un clan que no pagó su mantenimiento, usa `disbandClan(clan, "No pagó el mantenimiento", true)`: el evento llega con `UNPAID` y no se guarda ninguna copia.
