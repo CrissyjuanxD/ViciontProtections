@@ -210,7 +210,7 @@ guia:
         - '{acento}5. {texto}La zona del bloque es tu {dato}territorio principal {texto}y tú eres el {dato}líder{texto}.'
         - '{suave}Si no lo fundas en %fundacion% minutos, o no te alcanza el depósito, el bloque vuelve a tu inventario.'
         - '{error}Si el líder rompe el bloque de clan, el clan se disuelve (siempre pide confirmación).'
-        - '{texto}Para pasar a un bloque más grande, el líder coloca el nuevo y confirma: el territorio se mueve a él y el antiguo vuelve a su inventario, {dato}sin disolver el clan{texto}.'
+        - '{texto}Para pasar a un bloque más grande, el líder coloca el nuevo (por ejemplo al lado del actual) y elige el centro: {dato}en el mismo sitio{texto}, donde el bloque nuevo ocupa el lugar del antiguo, o {dato}donde puso el nuevo{texto}. El antiguo vuelve a su inventario, {dato}sin disolver el clan{texto}.'
         - '{suave}Si el clan se disuelve por error, se guarda una copia %copia% días: su líder la recupera colocando un bloque de clan. No se guarda si fue por no pagar el mantenimiento.'
     rangos:
       titulo: 'Rangos'

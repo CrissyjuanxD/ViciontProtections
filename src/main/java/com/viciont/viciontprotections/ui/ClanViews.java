@@ -1,6 +1,7 @@
 package com.viciont.viciontprotections.ui;
 
 import com.google.gson.*;
+import com.viciont.viciontprotections.api.Anchor;
 import com.viciont.viciontprotections.api.clan.*;
 import com.viciont.viciontprotections.clans.*;
 import com.viciont.viciontprotections.models.ClanBackup;
@@ -625,26 +626,40 @@ public final class ClanViews {
       screen.line("{texto}Bloque actual: {dato}" + (home.anchor() == null ? "sin bloque" : ProtectionDialogs.pretty(home.anchor().block().material()))
           + " {suave}· " + ProtectionDialogs.size(home) + " · " + ProtectionDialogs.place(home));
     screen.line("{acento}1. {texto}Consigue el nuevo bloque de clan, por ejemplo uno de {dato}300 × 300{texto}.");
-    screen.line("{acento}2. {texto}Colócalo donde quieras el centro del territorio principal, en el mismo mundo. Puede estar dentro del territorio actual.");
-    screen.line("{acento}3. {texto}Confirma el cambio: el territorio pasa al bloque nuevo con su tamaño y el bloque actual vuelve a tu inventario.");
+    screen.line("{acento}2. {texto}Colócalo en el mismo mundo, por ejemplo al lado del actual. Puede estar dentro del territorio.");
+    screen.line("{acento}3. {texto}Elige el centro: {dato}en el mismo sitio {texto}(el bloque nuevo ocupa el lugar del actual y la zona crece a su alrededor) o {dato}donde pusiste el nuevo{texto}.");
+    screen.line("{texto}El territorio pasa a medir lo del bloque nuevo y el bloque actual vuelve a tu inventario.");
     screen.line("{suave}El clan no se disuelve: rangos, chat, guerras, banco y protecciones aportadas siguen igual.");
     screen.line("{error}No rompas el bloque actual: romperlo disuelve el clan.");
     screen.exit("{titulo}◀ {texto}Ajustes", "/clan ajustes");
     show(player, screen);
   }
 
-  /** Confirmación tras colocar el nuevo bloque de clan. */
+  /** Confirmación tras colocar el nuevo bloque de clan: centro en el sitio del actual o en el nuevo. */
   public void confirmReplace(Player player, Clan clan, ClanFounding.Draft draft) {
+    confirmReplace(player, clan, draft, null);
+  }
+
+  public void confirmReplace(Player player, Clan clan, ClanFounding.Draft draft, String notice) {
     Protection home = clan.home() == null ? null : manager.protections().getProtection(clan.home()).orElse(null);
-    Screen screen = new Screen("Cambiar bloque de clan");
+    Anchor current = home == null ? null : home.anchor();
+    Screen screen = new Screen("Cambiar bloque de clan").notice(notice);
     screen.line("{texto}¿Cambiar el bloque de clan de " + paint(clan) + "{texto}?");
     if (home != null)
       screen.line("{suave}Ahora: {dato}" + ProtectionDialogs.size(home) + " {suave}· " + ProtectionDialogs.place(home));
-    screen.line("{suave}Nuevo: {dato}" + draft.spec().dimensions() + " {suave}· centro {dato}"
-        + draft.block().getBlockX() + ", " + draft.block().getBlockY() + ", " + draft.block().getBlockZ());
-    screen.line("{texto}El territorio principal se mueve al bloque nuevo con su tamaño; lo que quede fuera deja de estar protegido.");
-    screen.line("{texto}El bloque actual vuelve a tu inventario. El clan, sus rangos y su banco no cambian.");
-    screen.confirm("{acento}✔ Cambiar el bloque", "/clan bloque confirmar" + D, "{texto}Cancelar", "/clan bloque cancelar");
+    screen.line("{suave}Nuevo: {dato}" + draft.spec().dimensions());
+    screen.line("{texto}Elige dónde queda el {dato}centro {texto}del territorio principal. El bloque actual vuelve a tu inventario; el clan, sus rangos y su banco no cambian.");
+    if (current != null)
+      screen.button(
+          "{acento}✔ {texto}En el mismo sitio {suave}(" + current.x() + ", " + current.y() + ", " + current.z() + ")",
+          "{texto}El bloque nuevo ocupa el lugar del actual y la zona crece a su alrededor.\n{suave}El bloque que acabas de colocar se retira.",
+          "/clan bloque mantener" + D);
+    screen.button(
+        "{acento}✔ {texto}Donde está el bloque nuevo {suave}(" + draft.block().getBlockX() + ", " + draft.block().getBlockY() + ", "
+            + draft.block().getBlockZ() + ")",
+        "{texto}La zona se centra en el bloque nuevo.\n{error}Lo que quede fuera deja de estar protegido.",
+        "/clan bloque confirmar" + D);
+    screen.exit("{texto}Cancelar", "/clan bloque cancelar");
     show(player, screen);
   }
 

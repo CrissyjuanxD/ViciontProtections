@@ -284,12 +284,19 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         String sub = values.length > 0 ? values[0].toLowerCase(Locale.ROOT) : "";
         var draft = founding.draft(player.getUniqueId()).filter(d -> clan.id().equals(d.clan()));
         switch (sub) {
-          case "confirmar", "confirm" -> {
-            flow.views(n -> views.open(player, n), n -> views.open(player, n));
+          case "confirmar", "confirm", "mantener", "keep" -> {
+            boolean keep = sub.equals("mantener") || sub.equals("keep");
+            flow.views(
+                n -> views.open(player, n),
+                n -> {
+                  var pending = founding.draft(player.getUniqueId()).filter(d -> clan.id().equals(d.clan()));
+                  if (pending.isPresent()) views.confirmReplace(player, clan, pending.get(), n);
+                  else views.open(player, n);
+                });
             flow.await(
-                founding.replace(player),
+                founding.replace(player, keep),
                 ClanMessages.Theme.PUBLIC,
-                c -> "Bloque de clan cambiado: el territorio principal ahora mide {dato}"
+                c -> "Bloque de clan cambiado" + (keep ? " en el mismo sitio" : "") + ": el territorio principal ahora mide {dato}"
                     + draft.map(d -> d.spec().dimensions()).orElse("lo del bloque nuevo")
                     + "{texto}. El bloque anterior está en tu inventario.");
           }
@@ -815,7 +822,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
           manager.getClans().stream().filter(c -> clan == null || !c.id().equals(clan.id())).forEach(c -> options.add(c.name()));
       }
       case "salir", "disolver" -> options.add("confirmar");
-      case "bloque" -> options.addAll(List.of("confirmar", "cancelar"));
+      case "bloque" -> options.addAll(List.of("mantener", "confirmar", "cancelar"));
       case "guia" -> {
         manager.settings().topics().forEach(t -> options.add(t.key()));
         manager.extensionTopics().forEach(t -> options.add(t.key()));

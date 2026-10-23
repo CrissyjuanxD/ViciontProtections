@@ -89,7 +89,12 @@ Desde la 3.0.0 el plugin incluye clanes: grupos de jugadores con nombre, color, 
 
 Solo el líder puede romper el bloque de clan, y romperlo **disuelve el clan** tras confirmarlo. Las protecciones aportadas vuelven a sus dueños con sus roles anteriores.
 
-**Cambiar a un bloque más grande.** El líder coloca el nuevo bloque de clan (por ejemplo, de 300 × 300 en lugar de 150 × 150) y confirma. El territorio principal se mueve a la nueva zona, el bloque antiguo vuelve a su inventario y el clan conserva miembros, rangos, permisos, territorios y banco. La nueva zona puede incluir la antigua, pero no otras regiones.
+**Cambiar a un bloque más grande.** El líder coloca el nuevo bloque de clan (por ejemplo, de 300 × 300 en lugar de 150 × 150) en el mismo mundo, por ejemplo al lado del actual, y elige el centro del territorio:
+
+- **En el mismo sitio**: el bloque nuevo ocupa el lugar del antiguo y la zona crece a su alrededor. El bloque que acaba de colocar se retira.
+- **Donde está el bloque nuevo**: la zona se centra en él, y lo que quede fuera deja de estar protegido.
+
+En los dos casos el bloque antiguo vuelve a su inventario y el clan conserva miembros, rangos, permisos, territorios y banco. La nueva zona puede incluir la antigua, pero no otras regiones; si choca con alguna, el plugin lo avisa y deja elegir la otra opción o cancelar.
 
 **Copias de seguridad.** Al disolver un clan (rompiendo el bloque, por su líder o por la administración) se guarda una copia durante **5 días** (`clanes.copia-dias`). Cuando su antiguo líder coloca un bloque de clan, el plugin le pregunta si quiere **fundar uno nuevo o recuperar el anterior**, con nombre, color, rangos, permisos, banderas y los miembros que no se hayan unido a otro clan. Las zonas aportadas no vuelven, porque ya regresaron a sus dueños, pero se pueden aportar de nuevo. La recuperación no cobra el depósito. **Los clanes disueltos por no pagar el mantenimiento no guardan copia.**
 
@@ -150,7 +155,7 @@ El banco, el mantenimiento diario, el depósito para fundar y las recompensas de
 | `/clan limites` | Mostrar u ocultar el borde de los territorios |
 | `/clan permisos` · `/clan ajustes` | Casillas por rango, nombre, color y banderas |
 | `/clan nombre <nombre>` · `/clan color <color>` · `/clan bandera <bandera> <valor>` | Ajustes del líder |
-| `/clan bloque [confirmar\|cancelar]` | Cambiar el bloque de clan por el que acabas de colocar |
+| `/clan bloque [mantener\|confirmar\|cancelar]` | Cambiar el bloque de clan por el que acabas de colocar, con el centro en el mismo sitio (`mantener`) o en el bloque nuevo (`confirmar`) |
 | `/clan guerra [declarar\|rendirse\|paz]` | Estado y acciones de guerra |
 | `/clan chat` · `/clan modo` · `/cc [mensaje]` | Chat del clan |
 | `/clan activo <clan>` | Elegir el clan que muestras, si estás en varios |

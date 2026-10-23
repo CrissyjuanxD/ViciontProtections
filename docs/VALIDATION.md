@@ -61,7 +61,7 @@ Comprobado:
   - Bajas en la crónica.
   - Paz con contraoferta, rendición con tributo y cierre por la administración.
   - Espera entre guerras, protección de clanes nuevos y veto desde otro plugin.
-- Cambio de bloque de clan de 15 × 15 a 25 × 25. El territorio se mueve, el bloque antiguo vuelve al inventario, la zona antigua queda libre y se conservan miembros, rangos y banco.
+- Cambio de bloque de clan de 15 × 15 a 25 × 25, con el centro en el bloque nuevo y en el mismo sitio. El territorio se mueve o crece, el bloque antiguo vuelve al inventario y se conservan miembros, rangos y banco. Si la zona choca con otra región, el cambio sigue pendiente.
 - Copias de clanes disueltos:
   - Al colocar un bloque de clan, el líder elige entre fundar uno nuevo o recuperar el anterior.
   - La recuperación conserva miembros, rangos, permisos y saldo del banco, y no cobra depósito.

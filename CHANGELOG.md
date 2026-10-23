@@ -14,7 +14,7 @@
   - Dentro de los territorios, los rangos controlan construir, cofres, puertas y animales.
   - `/pr` no cambia el acceso de una zona del clan.
   - Banderas comunes, bordes con partículas y avisos al entrar y salir.
-- Cambio de bloque de clan: el líder coloca uno más grande y confirma. El territorio principal se mueve sin disolver el clan y el bloque antiguo vuelve a su inventario.
+- Cambio de bloque de clan: el líder coloca uno más grande y elige si el centro sigue en el mismo sitio (el bloque nuevo ocupa el lugar del antiguo) o pasa al bloque nuevo. El clan no se disuelve y el bloque antiguo vuelve a su inventario.
 - Copias de los clanes disueltos durante 5 días (`clanes.copia-dias`). Al colocar un bloque de clan, su antiguo líder elige entre fundar uno nuevo o recuperar el anterior. Los clanes disueltos por no pagar el mantenimiento no guardan copia.
 - Chat del clan:
   - `/cc` y modo clan.

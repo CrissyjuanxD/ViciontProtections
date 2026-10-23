@@ -276,10 +276,11 @@ public final class ClanFounding implements Listener {
   }
 
   /**
-   * Cambia el bloque de clan por el que el líder acaba de colocar: el territorio principal pasa a
-   * la zona del bloque nuevo y el bloque antiguo vuelve a su inventario.
+   * Cambia el bloque de clan por el que el líder acaba de colocar y devuelve el antiguo a su
+   * inventario. Con {@code keepCenter} el bloque nuevo ocupa el sitio del antiguo y la zona crece a
+   * su alrededor; si no, el territorio principal pasa a la zona centrada en el bloque nuevo.
    */
-  public CompletableFuture<Clan> replace(Player player) {
+  public CompletableFuture<Clan> replace(Player player, boolean keepCenter) {
     UUID id = player.getUniqueId();
     Draft draft = drafts.get(id);
     if (draft == null || draft.clan() == null)
@@ -291,13 +292,23 @@ public final class ClanFounding implements Listener {
     Protection home =
         clan.home() == null ? null : manager.protections().getProtection(clan.home()).orElse(null);
     if (home == null) throw new ProtectionException("Tu clan no tiene territorio principal que cambiar.");
-    Anchor anchor =
-        new Anchor(draft.block().getBlockX(), draft.block().getBlockY(), draft.block().getBlockZ(), draft.spec());
+    Anchor current = home.anchor();
+    World world = Bukkit.getWorld(home.worldName());
+    if (keepCenter && (current == null || world == null))
+      throw new ProtectionException("Tu territorio principal no tiene bloque de clan: el centro será el bloque nuevo.");
+    ProtectionBlock spec = draft.spec();
+    Location center = keepCenter ? new Location(world, current.x(), current.y(), current.z()) : draft.block();
+    Bounds bounds =
+        keepCenter
+            ? Bounds.centered(current.x(), current.y(), current.z(), spec.width(), spec.depth(), spec.height(),
+                world.getMinHeight(), world.getMaxHeight())
+            : draft.bounds();
+    Anchor anchor = new Anchor(center.getBlockX(), center.getBlockY(), center.getBlockZ(), spec);
     busy.add(id);
     CompletableFuture<Clan> result = new CompletableFuture<>();
     manager
         .protections()
-        .relocate(home.id(), draft.bounds(), anchor, player)
+        .relocate(home.id(), bounds, anchor, player)
         .whenComplete(
             (moved, failure) ->
                 Bukkit.getScheduler()
@@ -306,24 +317,27 @@ public final class ClanFounding implements Listener {
                         () -> {
                           busy.remove(id);
                           if (failure != null) {
-                            cancel(id, true);
+                            // El bloque sigue pendiente: puede probar la otra opción o cancelar.
                             result.completeExceptionally(failure);
                             return;
                           }
                           drafts.remove(id);
-                          Anchor old = home.anchor();
-                          World world = Bukkit.getWorld(home.worldName());
-                          if (old != null && world != null) {
-                            Block block = world.getBlockAt(old.x(), old.y(), old.z());
-                            if (block.getType() == old.block().material()) block.setType(Material.AIR, false);
-                            ProtectionCommand.giveItem(player, manager.createClanBlock(old.block(), 1));
+                          if (keepCenter) {
+                            Block placed = draft.block().getBlock();
+                            if (placed.getType() == spec.material()) placed.setType(Material.AIR, false);
+                            world.getBlockAt(current.x(), current.y(), current.z()).setType(spec.material(), false);
+                          } else if (current != null && world != null) {
+                            Block block = world.getBlockAt(current.x(), current.y(), current.z());
+                            if (block.getType() == current.block().material()) block.setType(Material.AIR, false);
                           }
-                          Clan current = manager.getClan(clan.id()).orElse(clan);
+                          if (current != null && world != null)
+                            ProtectionCommand.giveItem(player, manager.createClanBlock(current.block(), 1));
+                          Clan updated = manager.getClan(clan.id()).orElse(clan);
                           manager.notice(
-                              current,
+                              updated,
                               "{dato}" + player.getName() + " {texto}ha cambiado el bloque de clan: el territorio principal ahora mide {dato}"
                                   + draft.spec().dimensions() + "{texto}.");
-                          result.complete(current);
+                          result.complete(updated);
                         }));
     return result;
   }
