@@ -247,13 +247,20 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
       case "eliminar", "delete", "borrar" -> {
         allowed(sender, protection, Action.DELETE);
         if (values.length == 1
-            && (values[0].equalsIgnoreCase("confirmar") || values[0].equalsIgnoreCase("confirm")))
+            && (values[0].equalsIgnoreCase("confirmar") || values[0].equalsIgnoreCase("confirm"))) {
+          // Se mira antes de eliminar: al terminar, el gestor ya quitó el bloque del suelo
+          boolean refund = manager.anchorPlaced(protection);
+          boolean toInventory =
+              refund && sender instanceof Player deleter && deleter.getGameMode() != GameMode.CREATIVE;
           flow.await(
               manager.deleteProtection(id),
               theme,
-              () -> "Eliminaste la protección {dato}" + protection.name() + "{texto}.",
-              null);
-        else if (!(sender instanceof Player p && dialogs.confirmDelete(p, protection)))
+              () ->
+                  "Eliminaste la protección {dato}"
+                      + protection.name()
+                      + (toInventory ? "{texto}; el bloque protector volvió a tu inventario." : "{texto}."),
+              refund ? () -> refundAnchor(sender, protection) : null);
+        } else if (!(sender instanceof Player p && dialogs.confirmDelete(p, protection)))
           chat.confirmDelete(sender, protection);
       }
       case "transferir", "transfer" -> {
@@ -394,6 +401,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     permission(flow.sender, "viciontprotections.admin.reload");
     flow.views(notice -> dialogs.admin(flow.player, notice), notice -> dialogs.admin(flow.player, notice));
     plugin.reloadConfig();
+    AccessPolicy.applyUserDefaults(plugin);
     messages.reload();
     reloadHook.run();
     manager.guard().setDenyMessage(messages.text("avisos.denegado"));
@@ -473,6 +481,20 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
               + (clanBlock
                   ? "{texto}. Colócalo sin estar en un clan para fundar el tuyo."
                   : "{texto}. Colócalo para proteger tu zona."));
+  }
+
+  // Al eliminar desde el menú o con /pr eliminar se devuelve el bloque protector (no el bloque vanilla), igual
+  // que al romperlo. En creativo no se da nada y desde la consola cae donde estaba
+  private void refundAnchor(CommandSender sender, Protection protection) {
+    Anchor anchor = protection.anchor();
+    ItemStack item = manager.createProtectionBlock(anchor.block(), 1);
+    if (sender instanceof Player player && player.isOnline()) {
+      if (player.getGameMode() != GameMode.CREATIVE) giveItem(player, item);
+      return;
+    }
+    World world = Bukkit.getWorld(protection.worldName());
+    if (world != null)
+      world.dropItemNaturally(new Location(world, anchor.x() + 0.5, anchor.y() + 0.5, anchor.z() + 0.5), item);
   }
 
   public static void giveItem(Player player, ItemStack item) {

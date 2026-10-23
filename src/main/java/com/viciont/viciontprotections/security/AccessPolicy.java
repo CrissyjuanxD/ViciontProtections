@@ -3,6 +3,10 @@ package com.viciont.viciontprotections.security;
 import com.viciont.viciontprotections.models.Protection;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.permissions.PermissionDefault;
+import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.PluginManager;
 
 /** La misma política se usa al ejecutar comandos y al construir los diálogos. */
 public final class AccessPolicy {
@@ -59,6 +63,25 @@ public final class AccessPolicy {
       case TRANSFER -> "viciontprotections.admin.transfer";
       case FLAGS -> "viciontprotections.admin.flags";
     };
+  }
+
+  /**
+   * Con permissions.require-user-permissions en false los permisos de usuario y los de clan de los
+   * jugadores son de todos, así el plugin funciona sin plugin de permisos; en true vuelven a ser solo
+   * de OP. Los de administración (también admin.clan.*) no cambian, y un plugin de permisos puede
+   * seguir dándolos o quitándolos.
+   */
+  public static void applyUserDefaults(Plugin plugin) {
+    boolean required =
+        plugin.getConfig().getBoolean("permissions.require-user-permissions", false);
+    PermissionDefault value = required ? PermissionDefault.OP : PermissionDefault.TRUE;
+    PluginManager manager = plugin.getServer().getPluginManager();
+    for (Permission declared : plugin.getDescription().getPermissions()) {
+      String name = declared.getName();
+      if (!name.startsWith("viciontprotections.user.") && !name.startsWith("viciontprotections.clan.")) continue;
+      Permission registered = manager.getPermission(name);
+      if (registered != null && registered.getDefault() != value) registered.setDefault(value);
+    }
   }
 
   public static boolean allows(CommandSender sender, Protection protection, Action action) {

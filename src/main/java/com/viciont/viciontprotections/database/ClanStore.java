@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
  * Siete tablas de clanes junto a las de protecciones, con el mismo prefijo. La primera vez que se
  * crean se guarda una copia de la base: {@code protections-pre-clanes.db} en SQLite o tablas
  * {@code *_pre_clanes} en MySQL. Las protecciones de los territorios siguen en las tablas de la
- * 2.x con sus propietarios y miembros, así que volver al JAR 2.0.2 no pierde zonas ni accesos.
+ * 2.x con sus propietarios y miembros, así que volver a un JAR 2.0.x no pierde zonas ni accesos.
  */
 public final class ClanStore {
   private static final Gson JSON = new Gson();
