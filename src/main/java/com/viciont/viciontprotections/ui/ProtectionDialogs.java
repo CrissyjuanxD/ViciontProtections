@@ -222,8 +222,13 @@ public class ProtectionDialogs {
       add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Rangos, chat, territorios y guerras", "/clan");
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
-    if (hub != null) hub.forEach(dialog.getAsJsonArray("actions")::add);
-    else back(dialog, HOME, BACK_HOME);
+    if (hub != null) {
+      // Desde /prclan: una sola columna, con las secciones «Mis protecciones» y «Mis clanes» debajo
+      var actions = dialog.getAsJsonArray("actions");
+      hub.forEach(actions::add);
+      dialog.addProperty("columns", 1);
+      for (var action : actions) action.getAsJsonObject().addProperty("width", Screen.WIDE);
+    } else back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 
@@ -275,7 +280,11 @@ public class ProtectionDialogs {
     return show(player, dialog);
   }
 
-  public boolean list(Player player, List<Protection> list, int page, int pages, boolean all) {
+  /**
+   * Lista paginada. En «Mis protecciones» no salen las zonas de un clan ({@code clanZones} es
+   * cuántas hay): el clan las engloba y se gestionan desde su menú.
+   */
+  public boolean list(Player player, List<Protection> list, int page, int pages, boolean all, int clanZones) {
     if (!supported(player)) return false;
     var dialog =
         base((all ? "Todas las protecciones" : "Mis protecciones") + (pages > 1 ? " · " + page + "/" + pages : ""));
@@ -284,7 +293,7 @@ public class ProtectionDialogs {
           dialog,
           all
               ? "{suave}No hay protecciones en el servidor."
-              : "{suave}Aún no tienes protecciones. Consigue un bloque protector y colócalo.");
+              : "{suave}Aún no tienes protecciones personales. Consigue un bloque protector y colócalo.");
       add(dialog, "{titulo}۞ {texto}Ver la guía", null, "/pr guia");
     } else {
       body(
@@ -311,6 +320,10 @@ public class ProtectionDialogs {
       }
       if (page > 1) add(dialog, "{suave}« {texto}Anterior", "{suave}Página " + (page - 1), base + (page - 1));
       if (page < pages) add(dialog, "{texto}Siguiente {suave}»", "{suave}Página " + (page + 1), base + (page + 1));
+    }
+    if (clanZones > 0) {
+      body(dialog, "{suave}Las zonas de tu clan no salen aquí: se gestionan desde el menú del clan.");
+      add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Territorios, límites, banderas y bloque de clan", "/clan");
     }
     back(dialog, HOME, BACK_HOME);
     return show(player, dialog);

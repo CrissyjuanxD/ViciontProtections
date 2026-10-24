@@ -1,5 +1,13 @@
 # Cambios
 
+## 3.0.3
+
+### El clan engloba su zona
+
+- La zona que crea un clan al fundarse, y las que se le aportan, ya no aparecen como protecciones aparte. No salen en «Mis protecciones» ni en `/pr lista`, que avisa de que se gestionan desde el menú del clan.
+- Con `/pr` dentro de una zona de tu clan se abre el menú del clan. La administración sigue viendo la protección.
+- `/prclan` va en una sola columna y por secciones: **Mis protecciones**, con las personales, y **Mis clanes**, con cada clan una vez y tu rango. Debajo van las guías. En el menú del sitio donde estás no se repiten ese sitio ni su guía.
+
 ## 3.0.2
 
 ### Menús más claros

@@ -90,7 +90,8 @@ public final class ClanViews {
 
   /**
    * /prclan. Si estás en un territorio de tu clan o en una protección a la que tienes acceso, abre
-   * su menú y añade al final tus otras protecciones, tus clanes y las guías; si no, el inicio.
+   * su menú en una columna y añade debajo tus otras protecciones, tus clanes y la otra guía; si
+   * no, el inicio.
    */
   public void hub(CommandSender sender) {
     if (sender instanceof Player player) {
@@ -98,13 +99,13 @@ public final class ClanViews {
       Clan clan = here == null ? null : ownTerritory(player, here);
       if (clan != null) {
         // El menú del clan ya empieza con su guía: al final solo va la de protecciones
-        menu(player, clan, null, hubButtons(player, here, clan, true, false));
+        menu(player, clan, null, sections(player, here, clan, true, true, false));
         return;
       }
       if (here != null) {
         List<JsonObject> extras = new ArrayList<>();
         // El menú de la protección ya empieza con su guía: al final solo va la de clanes
-        for (Screen.Button button : hubButtons(player, here, null, false, true)) extras.add(button(button));
+        for (Screen.Button button : sections(player, here, null, true, false, true)) extras.add(button(button, Screen.WIDE));
         if (dialogs.menu(player, here, null, extras)) return;
       }
     }
@@ -112,14 +113,15 @@ public final class ClanViews {
   }
 
   /**
-   * Inicio de /prclan: tus protecciones y tus clanes para abrir su menú, y las dos guías. Es la
-   * página a la que vuelven las portadas de /pr y /clan.
+   * Inicio de /prclan, en una columna y por secciones: «Mis protecciones», «Mis clanes» y las dos
+   * guías. Es la página a la que vuelven las portadas de /pr y /clan.
    */
   public void home(CommandSender sender, String notice) {
     Screen screen =
         new Screen("{titulo}۞ <gradient:#C29BFF:#F5A8D6>Protecciones</gradient> {suave}y <gradient:#FFE08A:#FFA94D>clanes</gradient>")
             .plainTitle()
-            .notice(notice);
+            .notice(notice)
+            .wide();
     if (!(sender instanceof Player player)) {
       screen.line("{texto}Guías de protecciones ({dato}/pr guia{texto}) y de clanes ({dato}/clan guia{texto}).");
       screen.button(Messages.color("{titulo}۞ {texto}Guía de protecciones"), null, "/pr guia");
@@ -127,56 +129,63 @@ public final class ClanViews {
       show(sender, screen);
       return;
     }
-    UUID id = player.getUniqueId();
     Protection here = standingIn(player);
     Clan hereClan = here == null ? null : ownTerritory(player, here);
-    screen.line("{texto}Pulsa una protección o un clan para abrir su menú. Abajo están las guías.");
-    if (here != null)
-      screen.line("{texto}Estás en " + (hereClan != null ? "el territorio de " + paint(hereClan) : Messages.color("{dato}" + here.name())) + "{texto}.");
-    int count = manager.protections().getProtections(id).size();
-    Clan clan = manager.getPlayerClan(id).orElse(null);
-    screen.line("{suave}Protecciones: {dato}" + count
-        + (settings.enabled() ? " {suave}· Clan: " + (clan == null ? "{dato}ninguno" : paint(clan)) : ""));
-    if (hereClan != null)
-      screen.button("{titulo}⚑ {texto}Aquí: " + paint(hereClan), "{suave}Menú del clan del territorio donde estás", "/clan");
-    else if (here != null)
-      screen.button(Messages.color("{titulo}۞ {texto}Aquí: {dato}" + here.name()), Messages.color(tooltip(here, id)), "/pr @" + here.id() + " menu");
-    screen.buttons.addAll(hubButtons(player, here, hereClan, true, true));
+    screen.line("{texto}Pulsa una protección o un clan para abrir su menú.");
+    screen.buttons.addAll(sections(player, here, hereClan, false, true, true));
     if (ProtectionDialogs.hasAdmin(player))
       screen.button(Messages.color("{admin}✦ {texto}Administración de protecciones"), null, "/pr admin");
     if (hasAdmin(player)) screen.button("{admin}✦ {texto}Administración de clanes", null, "/clan admin");
     show(player, screen);
   }
 
-  /** Tus protecciones (menos la de {@code here}), tus clanes (menos {@code hereClan}) y las guías pedidas. */
-  private List<Screen.Button> hubButtons(
-      Player player, Protection here, Clan hereClan, boolean protectionGuide, boolean clanGuide) {
+  /**
+   * Secciones de /prclan: «Mis protecciones» con las personales (las de un clan se abren desde su
+   * menú), «Mis clanes» con cada clan una vez, y las guías pedidas. En el menú de un sitio
+   * ({@code context}) no se repiten ese sitio ni las secciones que quedarían vacías; en el inicio,
+   * el sitio donde estás se marca.
+   */
+  private List<Screen.Button> sections(
+      Player player, Protection here, Clan hereClan, boolean context, boolean protectionGuide, boolean clanGuide) {
     UUID id = player.getUniqueId();
     List<Screen.Button> list = new ArrayList<>();
-    List<Protection> others =
+    List<Protection> mine =
         manager.protections().getProtections(id).stream()
-            .filter(p -> here == null || !p.id().equals(here.id()))
+            .filter(p -> manager.territoryClan(p.id()).isEmpty())
+            .filter(p -> !context || here == null || !p.id().equals(here.id()))
             .toList();
-    int shown = Math.min(others.size(), HUB_PROTECTIONS);
-    for (Protection p : others.subList(0, shown))
+    if (!context || !mine.isEmpty()) {
+      boolean lists = player.hasPermission("viciontprotections.user.list");
       list.add(new Screen.Button(
-          Messages.color((manager.territoryClan(p.id()).isPresent() ? "{titulo}⚑ " : "{titulo}۞ ") + "{dato}" + p.name()),
-          Messages.color(tooltip(p, id)), "/pr @" + p.id() + " menu", false, null));
-    if (others.size() > shown)
-      list.add(new Screen.Button(Messages.color("{titulo}☰ {texto}Todas mis protecciones"), Messages.color("{suave}Lista completa"), "/pr lista", false, null));
+          Messages.color("{titulo}۞ {texto}&lMis protecciones" + (mine.isEmpty() ? "{suave} · ninguna" : "{suave} (" + mine.size() + ") ›")),
+          Messages.color(mine.isEmpty() ? "{suave}Cómo conseguir y colocar un bloque protector" : "{suave}Ver la lista completa"),
+          mine.isEmpty() || !lists ? "/pr guia" : "/pr lista", false, null));
+      for (Protection p : mine.subList(0, Math.min(mine.size(), HUB_PROTECTIONS)))
+        list.add(new Screen.Button(
+            Messages.color("{dato}" + p.name() + (here != null && p.id().equals(here.id()) ? " {acento}· estás aquí" : "")),
+            Messages.color(tooltip(p, id)), "/pr @" + p.id() + " menu", false, null));
+      if (mine.size() > HUB_PROTECTIONS)
+        list.add(new Screen.Button(Messages.color("{suave}… y " + (mine.size() - HUB_PROTECTIONS) + " más"),
+            Messages.color("{suave}Ver la lista completa"), "/pr lista", false, null));
+    }
     if (settings.enabled() && player.hasPermission("viciontprotections.clan.use")) {
-      List<Clan> clans = manager.getPlayerClans(id);
+      List<Clan> all = manager.getPlayerClans(id);
+      List<Clan> clans = all.stream().filter(c -> !context || hereClan == null || !c.id().equals(hereClan.id())).toList();
       Clan active = manager.getPlayerClan(id).orElse(null);
-      for (Clan clan : clans) {
-        if (hereClan != null && clan.id().equals(hereClan.id())) continue;
-        list.add(new Screen.Button("{titulo}⚑ " + paint(clan),
-            "{texto}Tu rango: {dato}" + clan.rank(id).map(settings::rankName).orElse("") + "\n{suave}Menú del clan",
-            clan.equals(active) ? "/clan" : "/clan activo @" + clan.id(), false, null));
-      }
-      if (clans.isEmpty()) {
+      if (all.isEmpty()) {
         int invites = manager.invitations(id).size();
-        list.add(new Screen.Button("{titulo}⚑ {texto}Clanes" + (invites > 0 ? " {acento}(" + invites + (invites == 1 ? " invitación)" : " invitaciones)") : ""),
-            "{suave}Fundar un clan, invitaciones y clanes del servidor", "/clan", false, null));
+        list.add(new Screen.Button(
+            "{titulo}⚑ {texto}&lMis clanes{suave} · " + (invites > 0 ? "{acento}" + invites + (invites == 1 ? " invitación" : " invitaciones") : "ninguno") + " {suave}›",
+            "{suave}Fundar un clan, responder invitaciones y ver los clanes del servidor", "/clan", false, null));
+      } else if (!clans.isEmpty()) {
+        list.add(new Screen.Button("{titulo}⚑ {texto}&lMis clanes{suave} (" + clans.size() + ") ›",
+            "{suave}Ver todos los clanes del servidor", "/clan lista", false, null));
+        for (Clan clan : clans)
+          list.add(new Screen.Button(
+              paint(clan) + " {suave}· " + clan.rank(id).map(settings::rankName).orElse("")
+                  + (hereClan != null && clan.id().equals(hereClan.id()) ? " {acento}· estás en su territorio" : ""),
+              "{suave}Menú del clan: miembros, chat, territorios y guerras",
+              clan.equals(active) ? "/clan" : "/clan activo @" + clan.id(), false, null));
       }
     }
     if (protectionGuide)
@@ -184,6 +193,17 @@ public final class ClanViews {
     if (clanGuide && settings.enabled())
       list.add(new Screen.Button("{titulo}⚑ {texto}Guía de clanes", "{suave}Cómo funcionan los clanes, por temas", "/clan guia", false, null));
     return list;
+  }
+
+  /**
+   * Menú de una protección que es zona del clan del jugador: el del clan, que la engloba. Devuelve
+   * falso si no es zona de su clan (la administración ve la protección como siempre).
+   */
+  public boolean territoryMenu(Player player, Protection protection) {
+    Clan clan = ownTerritory(player, protection);
+    if (clan == null) return false;
+    menu(player, clan, "{suave}Esta zona es del clan " + paint(clan) + "{suave}: se gestiona desde este menú.");
+    return true;
   }
 
   /** Protección donde está el jugador, si puede usar su menú. */
@@ -362,7 +382,7 @@ public final class ClanViews {
     if (rank != ClanRank.LEADER) screen.button("{error}↩ {texto}Salir del clan", "{suave}Pide confirmación", "/clan salir");
     screen.button("{titulo}☰ {texto}Clanes del servidor", null, "/clan lista");
     if (hasAdmin(player)) screen.button("{admin}✦ {texto}Administración", "{suave}Gestionar cualquier clan", "/clan admin");
-    if (hub != null) screen.buttons.addAll(hub);
+    if (hub != null) screen.wide().buttons.addAll(hub);
     else screen.back(HOME, BACK_HOME);
     show(player, screen);
   }
@@ -989,21 +1009,21 @@ public final class ClanViews {
     }
     dialog.addProperty("columns", screen.columns);
     var actions = new JsonArray();
-    for (Screen.Button button : screen.buttons) actions.add(button(button));
+    for (Screen.Button button : screen.buttons) actions.add(button(button, screen.width));
     // Siempre igual: los botones de la página, «◀ Volver» y, en el pie, «✖ Salir». ESC ejecuta el
     // botón del pie, así que cierra el menú desde cualquier página en vez de ir hacia atrás
-    if (screen.back != null) actions.add(button(screen.back));
-    if (actions.isEmpty()) actions.add(button(CLOSE));
-    else dialog.add("exit_action", button(CLOSE));
+    if (screen.back != null) actions.add(button(screen.back, screen.width));
+    if (actions.isEmpty()) actions.add(button(CLOSE, 150));
+    else dialog.add("exit_action", button(CLOSE, 150));
     dialog.add("actions", actions);
     return dialog;
   }
 
-  private JsonObject button(Screen.Button button) {
+  private JsonObject button(Screen.Button button, int width) {
     var json = new JsonObject();
     json.add("label", component(button.label()));
     if (button.tooltip() != null) json.add("tooltip", component(button.tooltip()));
-    json.addProperty("width", 150);
+    json.addProperty("width", width);
     if (button.command() != null) {
       var action = new JsonObject();
       if (button.template()) {

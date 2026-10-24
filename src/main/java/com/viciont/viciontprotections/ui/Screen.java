@@ -26,6 +26,8 @@ public final class Screen {
   /** Página a la que lleva «◀ Volver», justo encima de «✖ Salir»; nula en las portadas. */
   Button back;
   int columns = 2;
+  /** Ancho de los botones del diálogo. */
+  int width = 150;
   boolean plainTitle;
 
   public Screen(String title) {
@@ -97,6 +99,16 @@ public final class Screen {
     columns = value;
     return this;
   }
+
+  /** Una sola columna de botones anchos, como una lista por secciones (/prclan). */
+  public Screen wide() {
+    columns = 1;
+    width = WIDE;
+    return this;
+  }
+
+  /** Ancho de los botones en las pantallas de una columna. */
+  public static final int WIDE = 300;
 
   public boolean hasButtons() {
     return !buttons.isEmpty();

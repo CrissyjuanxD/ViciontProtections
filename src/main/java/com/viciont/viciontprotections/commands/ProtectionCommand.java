@@ -33,6 +33,7 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
   private final ChatViews chat;
   private final Boundaries boundaries;
   private Runnable reloadHook = () -> {};
+  private BiPredicate<Player, Protection> clanMenu;
 
   public ProtectionCommand(
       JavaPlugin plugin,
@@ -52,6 +53,14 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
   /** Otros ajustes que se recargan con /pr recargar (clans.yml). */
   public void setReloadHook(Runnable hook) {
     reloadHook = hook == null ? () -> {} : hook;
+  }
+
+  /**
+   * Abre el menú del clan cuando la protección es una zona del clan del jugador; devuelve si lo
+   * abrió. Así la zona que crea un clan no parece una protección aparte.
+   */
+  public void setClanMenu(BiPredicate<Player, Protection> opener) {
+    clanMenu = opener;
   }
 
   /**
@@ -360,6 +369,8 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
         && !protection.canAccess(player.getUniqueId())
         && !player.hasPermission("viciontprotections.admin.manage")) protection = null;
     if (protection != null) {
+      // Una zona de tu clan no es una protección aparte: su menú es el del clan
+      if (clanMenu != null && clanMenu.test(player, protection)) return;
       if (!dialogs.menu(player, protection, notice)) chat.menu(player, protection);
     } else if (!dialogs.guide(player, null)) guide(player, null);
   }
@@ -375,11 +386,18 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
     int page = values.length > 0 ? number(values[0]) : 1;
     List<Protection> list =
         all ? manager.getProtections() : manager.getProtections(player(sender).getUniqueId());
+    // «Mis protecciones» son las personales: la zona que crea un clan al fundarse y las aportadas
+    // las engloba el clan y se gestionan desde su menú
+    int clanZones = 0;
+    if (!all) {
+      clanZones = (int) list.stream().filter(AccessPolicy::isTerritory).count();
+      list = list.stream().filter(p -> !AccessPolicy.isTerritory(p)).toList();
+    }
     boolean dialog = sender instanceof Player p && dialogs.supported(p);
     int size = dialog ? 10 : ChatViews.PAGE;
     int pages = Math.max(1, (list.size() + size - 1) / size);
     page = Math.max(1, Math.min(page, pages));
-    if (!(dialog && dialogs.list((Player) sender, list, page, pages, all)))
+    if (!(dialog && dialogs.list((Player) sender, list, page, pages, all, clanZones))) {
       chat.list(
           sender,
           list,
@@ -387,6 +405,9 @@ public final class ProtectionCommand implements CommandExecutor, TabCompleter {
           Math.max(1, (list.size() + ChatViews.PAGE - 1) / ChatViews.PAGE),
           all,
           sender instanceof Player p ? p.getUniqueId() : null);
+      if (clanZones > 0)
+        messages.send(sender, "{suave}Las zonas de tu clan se gestionan desde {dato}/clan{suave}.");
+    }
   }
 
   private void admin(CommandSender sender) {

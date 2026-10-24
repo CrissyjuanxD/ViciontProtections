@@ -66,6 +66,7 @@ public final class ViciontProtections extends JavaPlugin {
       clanChat = new ClanChat(this, clans);
       clans.connect(wars, clanChat);
       var clanViews = new ClanViews(clans, dialogs);
+      commands.setClanMenu(clanViews::territoryMenu);
       founding = new ClanFounding(this, clans);
       founding.connect(clanViews);
       clanViews.connect(founding);
