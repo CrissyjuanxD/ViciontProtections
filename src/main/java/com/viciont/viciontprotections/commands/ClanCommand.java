@@ -143,6 +143,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
         else views.guide(sender, "comandos");
       }
       case "lista", "list" -> views.list(sender, values.length > 0 ? number(values[0]) : 1);
+      case "mios", "míos", "mine" -> views.mine(player(sender), null);
       case "info" -> {
         Clan clan = values.length == 0 ? myClan(player(sender)) : manager.resolve(String.join(" ", values));
         views.info(sender, clan);
@@ -762,7 +763,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
     Player player = sender instanceof Player p ? p : null;
     Clan clan = player == null ? null : manager.getPlayerClan(player.getUniqueId()).orElse(null);
     if (args.length <= 1) {
-      options.addAll(List.of("guia", "lista", "info"));
+      options.addAll(List.of("guia", "lista", "info", "mios"));
       if (clan == null) {
         options.addAll(List.of("aceptar", "rechazar"));
         if (founding != null && player != null && founding.draft(player.getUniqueId()).isPresent()) options.add("fundar");

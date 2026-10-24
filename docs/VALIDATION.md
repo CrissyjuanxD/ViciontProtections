@@ -1,4 +1,4 @@
-# Validación de ViciontProtections 3.0.4
+# Validación de ViciontProtections 3.0.5
 
 Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contra la API de Spigot 1.21 con bytecode Java 21 y no usa clases NMS. La API de diálogos de Spigot 1.21.6+ se carga solo cuando el servidor la incluye.
 
@@ -89,6 +89,7 @@ Comprobado:
   - `/pr` dentro de la zona del clan abre el menú del clan.
   - `/prclan` dentro de la protección personal y de la zona del clan abre su menú normal; fuera, la lista.
   - «◀ Volver» y «✖ Salir» al final de cada página.
+  - Panel por parejas con y sin clan, y `/clan mios` con y sin clanes.
 - QuasoPlugin (Paper 26.2):
   - Depósito al fundar, con un intento sin fondos y otro con fondos.
   - Aportar y retirar según las casillas.

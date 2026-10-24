@@ -1,5 +1,15 @@
 # Cambios
 
+## 3.0.5
+
+### Novedades
+
+- El panel de `/prclan` va en dos columnas, por parejas:
+  - «۞ Mis protecciones (N)» abre la lista; al lado, tu última protección (la última que creaste o, si no, la última a la que te añadieron) o «Ninguna».
+  - «⚑ Mis clanes (N)» abre tus clanes; al lado, tu clan o «Ninguno».
+  - «Guía de protecciones» y «Guía de clanes».
+- `/clan mios`: tus clanes, y cada uno entra directo a su menú. La lista de clanes del servidor, con sus fichas, sigue en el menú del clan.
+
 ## 3.0.4
 
 ### Correcciones
