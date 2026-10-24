@@ -153,14 +153,6 @@ public class ProtectionDialogs {
 
   /** Menú principal de una protección; los botones dependen del rol del jugador. */
   public boolean menu(Player player, Protection p, String notice) {
-    return menu(player, p, notice, null);
-  }
-
-  /**
-   * Con {@code hub} (desde /prclan) el menú acaba con tus otras protecciones, tus clanes y las
-   * guías en vez de «Volver».
-   */
-  public boolean menu(Player player, Protection p, String notice, List<JsonObject> hub) {
     if (!supported(player)) return false;
     var dialog = base(p.name());
     notice(dialog, notice);
@@ -222,13 +214,7 @@ public class ProtectionDialogs {
       add(dialog, "{titulo}⚑ {texto}Menú del clan", "{suave}Rangos, chat, territorios y guerras", "/clan");
     if (hasAdmin(player))
       add(dialog, "{admin}✦ Administración", "{suave}Herramientas para el staff", "/pr admin");
-    if (hub != null) {
-      // Desde /prclan: una sola columna, con las secciones «Mis protecciones» y «Mis clanes» debajo
-      var actions = dialog.getAsJsonArray("actions");
-      hub.forEach(actions::add);
-      dialog.addProperty("columns", 1);
-      for (var action : actions) action.getAsJsonObject().addProperty("width", Screen.WIDE);
-    } else back(dialog, HOME, BACK_HOME);
+    back(dialog, HOME, BACK_HOME);
     return show(player, dialog);
   }
 

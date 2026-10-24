@@ -1,5 +1,11 @@
 # Cambios
 
+## 3.0.4
+
+### Correcciones
+
+- `/prclan` dentro de una protección tuya o de un territorio de tu clan salía como lista en una columna. Ahora abre el menú normal de ese sitio, y su «◀ Volver» lleva al panel. La lista por secciones queda solo para cuando estás fuera, o con `/prclan inicio`.
+
 ## 3.0.3
 
 ### El clan engloba su zona
