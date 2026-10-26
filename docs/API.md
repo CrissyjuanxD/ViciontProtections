@@ -162,11 +162,6 @@ Desde 3.0.6, los jugadores pueden elegir cualquier `#RRGGBB` válido, además de
 sigue devolviendo ese formato: no asumas que el color pertenece a los preestablecidos de `clans.yml`.
 La API y las columnas SQL mantienen sus tipos anteriores.
 
-Para un mantenimiento por miembro como el de QuasoPlugin #174, toma `getClan(id)` actualizado en el
-momento del cobro y usa `members().size()` (incluye al líder y todos los rangos). No uses jugadores
-conectados ni instantáneas anteriores a una operación asíncrona. El banco y los cobros siguen siendo
-responsabilidad de la extensión; ViciontProtections no debita dinero.
-
 ### Acciones
 
 | Método | Efecto |

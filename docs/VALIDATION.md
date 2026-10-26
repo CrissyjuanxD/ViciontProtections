@@ -13,10 +13,6 @@ Nuevas comprobaciones de 3.0.6:
 - Persistencia del color personalizado al cerrar y reabrir SQLite, y en las copias de clanes disueltos.
 - Guía nueva disponible con una configuración anterior, sin sobrescribir los textos personalizados ni duplicar temas al recargar.
 
-La integración acompañante **QuasoPlugin #174** pasa **8 pruebas** del banco: cobro por todos los miembros,
-un cobro al día, altas y bajas entre cobros o durante un aporte asíncrono, deuda y pago, disolución por impago, cuota cero, días cubiertos
-y protección frente a desbordamientos. El JAR de QuasoPlugin también se ha compilado y empaquetado.
-
 Estas comprobaciones son automatizadas; no se ha repetido en 3.0.6 la sesión multijugador de las versiones
 anteriores que se documenta abajo. La revisión visual dentro de Minecraft queda pendiente.
 
@@ -48,7 +44,7 @@ Los clanes se recorrieron con varios clientes automáticos (mineflayer) a la vez
 | Paper 1.21.8 | 21 | Diálogos | LuckPerms sin OP, plugin de prueba de la API |
 | Paper 1.21.1 | 21 | Chat con botones | Sin diálogos |
 | Spigot 1.21.8 (BuildTools) | 21 | Diálogos de Spigot | |
-| Paper 26.2 | 25 | Diálogos | QuasoPlugin con el banco de clanes, MariaDB |
+| Paper 26.2 | 25 | Diálogos | Extensión de banco de clanes, MariaDB |
 
 Comprobado:
 
@@ -104,7 +100,7 @@ Comprobado:
   - `/prclan` dentro de la protección personal y de la zona del clan abre su menú normal; fuera, la lista.
   - «◀ Volver» y «✖ Salir» al final de cada página.
   - Panel por parejas con y sin clan, y `/clan mios` con y sin clanes.
-- QuasoPlugin (Paper 26.2):
+- API con una extensión de banco (Paper 26.2):
   - Depósito al fundar, con un intento sin fondos y otro con fondos.
   - Aportar y retirar según las casillas.
   - Recompensa de rendición y deuda de guerra con veto a nuevas declaraciones.

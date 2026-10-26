@@ -2,18 +2,12 @@
 
 ## 3.0.6
 
-- Colores HEX libres para los clanes: `/clan color #B75FFF`, administración y fundación aceptan cualquier
-  `#RRGGBB` válido, sin registrarlo antes en la paleta. Se conservan permisos, colores preestablecidos y
-  persistencia SQL, incluidas las copias de clanes disueltos.
-- Campo de texto HEX en los diálogos de fundación y cambio de color, con acciones separadas para aplicar
-  el selector o el código escrito. Al abrir un clan con color propio se conserva su color actual.
-- Nuevo tema **Color del clan** en `/clan guia`, disponible también al actualizar un `clans.yml` existente
-  sin sobrescribir los textos personalizados.
-- Integración acompañante **QuasoPlugin #174**: mantenimiento diario por miembro, cobrado del banco común;
-  con cuota 2 y 10 miembros se pagan 20 DinoCoins. Se actualizan el menú, los avisos y el tema del banco
-  de `/clan guia`. Para activar el cobro por miembro hay que instalar también el JAR de QuasoPlugin enlazado
-  en la release; ViciontProtections no cobra monedas por su cuenta.
-- No se modifica la API pública ni el esquema SQL.
+### Novedades
+
+- El color del clan admite códigos HEX, como `#B75FFF`, además de los colores preestablecidos de `clans.yml`. Se pueden usar al fundar el clan y con `/clan color #B75FFF`, sin añadirlos antes a la configuración.
+- Los diálogos de fundación y cambio de color tienen un campo **Color personalizado (#RRGGBB)**. Puedes aplicar el color de la lista o el código escrito con su botón correspondiente.
+- El color elegido se guarda con el clan y se conserva al reiniciar o recuperar una copia. Al volver al diálogo aparece el color actual.
+- `/clan guia` añade el tema **Color del clan**, con los pasos para elegirlo y cambiarlo. También aparece al actualizar un `clans.yml` anterior, conservando los textos personalizados.
 
 ## 3.0.5
 

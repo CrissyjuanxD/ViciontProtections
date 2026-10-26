@@ -151,18 +151,7 @@ Solo luchan los miembros con 24 horas en el clan, nunca los invitados. Un clan s
 
 ### Banco y plugins conectados
 
-El banco, el mantenimiento diario, el depósito para fundar y las recompensas de guerra **no están en este plugin**: los añade otro plugin mediante la [API de clanes](docs/API.md#clanes). Por ejemplo, QuasoPlugin implementa un banco de DinoCoins con su botón en el menú, sus casillas de permiso, sus líneas de estado y su tema en la guía. Sin plugins conectados, fundar es gratis y no hay mantenimiento.
-
-Con **QuasoPlugin #174**, la cuota diaria es `clanes.mantenimiento-diario × miembros actuales` y sale del
-banco común. Cuentan el líder, los invitados y los desconectados; las invitaciones pendientes no cuentan.
-Por ejemplo, **2 DinoCoins por miembro × 10 miembros = 20 DinoCoins al día**. Cada miembro puede aportar
-según los permisos de su rango. Al unirse o salir alguien cambia la cuota del siguiente cobro, sin otro cargo
-por entrar. El banco muestra el desglose y los días que cubre su saldo.
-
-Para aplicar esta actualización completa, instala **ViciontProtections 3.0.6 y QuasoPlugin #174**. En
-`plugins/QuasoPlugin/config.yml`, `clanes.mantenimiento-diario` conserva su valor pero ahora significa
-**DinoCoins por miembro y día**. Revisa el saldo antes del próximo cobro. Se conservan las cuentas, los
-plazos y la disolución por impago. No es necesario borrar archivos ni migrar las tablas.
+El banco, el mantenimiento diario, el depósito para fundar y las recompensas de guerra los puede añadir otro plugin mediante la [API de clanes](docs/API.md#clanes), con sus botones, permisos, líneas de estado y temas de guía. Sin plugins conectados, fundar es gratis y no hay mantenimiento.
 
 ### Comandos de clanes
 
