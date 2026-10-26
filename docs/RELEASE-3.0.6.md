@@ -19,11 +19,17 @@ paleta del servidor. La integración acompañante de QuasoPlugin calcula el mant
 - El banco, los avisos de días cubiertos y su tema en `/clan guia` muestran la nueva cuota. Se conservan
   el primer día de gracia, la hora de cobro y los plazos de impago. No cambia el esquema SQL.
 
+## Descargas
+
+- [ViciontProtections-3.0.6.jar](https://github.com/CrissyjuanxD/ViciontProtections/releases/download/v3.0.6/ViciontProtections-3.0.6.jar), compilado y probado por GitHub Actions desde el tag de la release.
+- [QuasoPlugin-1.1.5.jar · actualización #174](https://github.com/CrissyjuanxD/QuasoPlugin/raw/a1d8e79/descargas/integracion-clanes-3.0.6/QuasoPlugin-1.1.5.jar).
+- [SHA-256 de QuasoPlugin](https://github.com/CrissyjuanxD/QuasoPlugin/blob/a1d8e79/descargas/integracion-clanes-3.0.6/SHA256SUMS.txt).
+
 ## Instalar en el servidor de Quaso
 
 1. Detén el servidor y guarda una copia de los JAR, configuraciones y bases de datos actuales.
 2. Sustituye el JAR anterior de ViciontProtections por **ViciontProtections-3.0.6.jar**.
-3. Sustituye también **QuasoPlugin-1.1.5.jar** por el adjunto a esta release: contiene la actualización
+3. Sustituye también **QuasoPlugin-1.1.5.jar** por el enlazado en esta release: contiene la actualización
    **#174** de la rama `26.2`. No dejes dos JAR del mismo plugin. Este archivo acompañante requiere
    **Paper 26.2 y Java 25**; ViciontProtections conserva su compatibilidad propia y bytecode Java 21.
 4. Conserva tus archivos. En `plugins/QuasoPlugin/config.yml`, la clave existente pasa a significar:
@@ -46,5 +52,5 @@ No hace falta borrar `clans.yml`, clanes ni saldos.
 - ViciontProtections: `clean verify`, **34 pruebas sin fallos**; incluye HEX, diálogos, persistencia y guía.
 - QuasoPlugin: **8 pruebas del banco sin fallos** y JAR compilado; cubren cobro único, miembros actuales,
   deuda, avisos y aportes asíncronos.
-- Ambos JAR comprobados; huellas en `SHA256SUMS.txt`.
+- Ambos JAR comprobados; la descarga de QuasoPlugin incluye su `SHA256SUMS.txt`.
 - Revisión visual y sesión multijugador de 3.0.6 pendientes; no se han desplegado cambios en el servidor.

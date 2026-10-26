@@ -11,7 +11,7 @@
   sin sobrescribir los textos personalizados.
 - Integración acompañante **QuasoPlugin #174**: mantenimiento diario por miembro, cobrado del banco común;
   con cuota 2 y 10 miembros se pagan 20 DinoCoins. Se actualizan el menú, los avisos y el tema del banco
-  de `/clan guia`. Para activar el cobro por miembro hay que instalar también el JAR de QuasoPlugin incluido
+  de `/clan guia`. Para activar el cobro por miembro hay que instalar también el JAR de QuasoPlugin enlazado
   en la release; ViciontProtections no cobra monedas por su cuenta.
 - No se modifica la API pública ni el esquema SQL.
 
