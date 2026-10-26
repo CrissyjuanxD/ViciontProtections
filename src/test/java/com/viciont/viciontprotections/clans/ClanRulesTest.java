@@ -77,6 +77,45 @@ class ClanRulesTest {
   }
 
   @Test
+  void customHexDoesNotNeedToBeInThePaletteAndInvalidCodesAreRejected() throws Exception {
+    var settings = settings();
+    assertFalse(settings.colors().containsValue("#12ABEF"));
+    assertEquals(Optional.of("#12ABEF"), settings.color("  #12abEf  "));
+    assertEquals(Optional.of("#000000"), settings.color("#000000"));
+    assertEquals(Optional.of("#FFFFFF"), settings.color("#ffffff"));
+    assertEquals(Optional.of("#C29BFF"), settings.color("LiLa"));
+    for (String invalid : List.of("", "#FFF", "123456", "#12345678", "#12345G", "&#12ABEF", "#12ABEF /op", "§c"))
+      assertTrue(settings.color(invalid).isEmpty(), invalid);
+    assertTrue(settings.color(null).isEmpty());
+  }
+
+  @Test
+  void existingGuideKeepsCustomTextAndReceivesTheNewColorTopicOnReload() throws Exception {
+    var settings = settings();
+    Path file = temp.resolve("clans.yml");
+    var config = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(file.toFile());
+    config.set("guia.temas.colores", null);
+    config.set("guia.temas.clan.lineas", List.of("Mi guía personalizada"));
+    config.save(file.toFile());
+    String stored = Files.readString(file);
+    settings.reload();
+    assertEquals(List.of("Mi guía personalizada"), settings.topics().stream().filter(t -> t.key().equals("clan")).findFirst().orElseThrow().lines());
+    assertTrue(settings.topics().stream().anyMatch(t -> t.key().equals("colores") && t.lines().stream().anyMatch(l -> l.contains("#B75FFF"))));
+    settings.reload();
+    assertEquals(1, settings.topics().stream().filter(t -> t.key().equals("colores")).count());
+    assertEquals(stored, Files.readString(file), "no sobrescribe la configuración del servidor");
+  }
+
+  private ClanSettings settings() throws Exception {
+    Path resource = Path.of("src/main/resources/clans.yml");
+    Files.copy(resource, temp.resolve("clans.yml"));
+    JavaPlugin plugin = mock(JavaPlugin.class);
+    when(plugin.getDataFolder()).thenReturn(temp.toFile());
+    when(plugin.getResource("clans.yml")).thenAnswer(call -> new FileInputStream(resource.toFile()));
+    return new ClanSettings(plugin);
+  }
+
+  @Test
   void textHelpers() {
     assertEquals("templo camaron", ClanManager.normalized("  Templo   Camarón "));
     assertEquals("2 días y 3 horas", ClanWars.duration(51 * 3_600_000L));

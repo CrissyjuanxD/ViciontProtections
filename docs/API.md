@@ -1,4 +1,4 @@
-# API de ViciontProtections 3.0.5
+# API de ViciontProtections 3.0.6
 
 La API permite integrar tiendas, recompensas, generación de parcelas y otros sistemas sin ejecutar comandos ni escribir SQL. Los tipos públicos están en `com.viciont.viciontprotections.api`; `Protection` es un registro inmutable en `com.viciont.viciontprotections.models`.
 
@@ -7,14 +7,14 @@ La API permite integrar tiendas, recompensas, generación de parcelas y otros si
 Compila contra el JAR de ViciontProtections con alcance `provided`. Si lo instalas en tu repositorio Maven local:
 
 ```bash
-mvn install:install-file -Dfile=ViciontProtections-3.0.5.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=3.0.5 -Dpackaging=jar
+mvn install:install-file -Dfile=ViciontProtections-3.0.6.jar -DgroupId=com.viciont -DartifactId=ViciontProtections -Dversion=3.0.6 -Dpackaging=jar
 ```
 
 ```xml
 <dependency>
     <groupId>com.viciont</groupId>
     <artifactId>ViciontProtections</artifactId>
-    <version>3.0.5</version>
+    <version>3.0.6</version>
     <scope>provided</scope>
 </dependency>
 ```
@@ -157,6 +157,15 @@ ViciontClansApi clans = Bukkit.getServicesManager().load(ViciontClansApi.class);
 | `getWar(clan)` · `getWars(clan)` | Guerra activa e historial |
 
 Los rangos, de menor a mayor, son `GUEST`, `APPRENTICE`, `OFFICER`, `CO_LEADER` y `LEADER`. `ClanRank#isAtLeast` sirve para comparar.
+
+Desde 3.0.6, los jugadores pueden elegir cualquier `#RRGGBB` válido, además de la paleta. `Clan.color()`
+sigue devolviendo ese formato: no asumas que el color pertenece a los preestablecidos de `clans.yml`.
+La API y las columnas SQL mantienen sus tipos anteriores.
+
+Para un mantenimiento por miembro como el de QuasoPlugin #174, toma `getClan(id)` actualizado en el
+momento del cobro y usa `members().size()` (incluye al líder y todos los rangos). No uses jugadores
+conectados ni instantáneas anteriores a una operación asíncrona. El banco y los cobros siguen siendo
+responsabilidad de la extensión; ViciontProtections no debita dinero.
 
 ### Acciones
 

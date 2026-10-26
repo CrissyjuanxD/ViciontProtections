@@ -10,7 +10,7 @@ Protecciones con WorldGuard, clanes con territorio y guerras, bloques personaliz
 
 ![Minecraft](https://img.shields.io/badge/Minecraft-1.21–26.2-C8A2E8)
 ![Java](https://img.shields.io/badge/Java-21%2B-EAB5D5)
-![Versión](https://img.shields.io/badge/Versión-3.0.5-B995E8)
+![Versión](https://img.shields.io/badge/Versión-3.0.6-B995E8)
 ![Licencia](https://img.shields.io/badge/Licencia-MIT-E8B9D9)
 
 [Guía](#-guía-para-jugadores) · [Clanes](#-viciont-clans) · [Comandos](#-comandos) · [Permisos](#-permisos-y-roles) · [API](docs/API.md)
@@ -33,7 +33,7 @@ Protecciones con WorldGuard, clanes con territorio y guerras, bloques personaliz
 
 1. Utiliza Spigot/Paper **1.21–26.2** y la versión de Java que requiere tu servidor. El plugin se compila para Java 21; Minecraft 26.2 requiere Java 25.
 2. Instala **WorldEdit y WorldGuard para tu versión exacta de Minecraft**. No están incluidos en este JAR.
-3. Coloca `ViciontProtections-3.0.5.jar` en `plugins/` y reinicia el servidor.
+3. Coloca `ViciontProtections-3.0.6.jar` en `plugins/` y reinicia el servidor.
 4. Configura `plugins/ViciontProtections/config.yml`, `messages.yml` y `clans.yml`. Los permisos son opcionales: sin plugin de permisos cualquier jugador puede usar las funciones de usuario y de clanes (consulta [Permisos y roles](#-permisos-y-roles)).
 
 PlaceholderAPI es opcional: si está instalado, se registran los marcadores de clan.
@@ -102,6 +102,17 @@ En los dos casos el bloque antiguo vuelve a su inventario y el clan conserva mie
 
 **Copias de seguridad.** Al disolver un clan (rompiendo el bloque, por su líder o por la administración) se guarda una copia durante **5 días** (`clanes.copia-dias`). Cuando su antiguo líder coloca un bloque de clan, el plugin le pregunta si quiere **fundar uno nuevo o recuperar el anterior**, con nombre, color, rangos, permisos, banderas y los miembros que no se hayan unido a otro clan. Las zonas aportadas no vuelven, porque ya regresaron a sus dueños, pero se pueden aportar de nuevo. La recuperación no cobra el depósito. **Los clanes disueltos por no pagar el mantenimiento no guardan copia.**
 
+### Color personalizado
+
+Al fundar un clan o desde **Ajustes → Cambiar color**, puedes elegir uno de los colores preestablecidos o
+escribir un código hexadecimal en el campo **Color personalizado (#RRGGBB)**. Pulsa **Usar código HEX**
+para aplicar ese campo o **Usar color de lista** para aplicar el selector; al fundar, los botones son
+**Fundar con HEX** y **Fundar con lista**. Por ejemplo: `/clan color #B75FFF`.
+
+Se aceptan seis dígitos hexadecimales con `#`, sin añadirlos antes a `clans.yml`. El color queda guardado
+en el clan, persiste tras reiniciar y se conserva en sus copias. Cambiarlo sigue requiriendo la casilla
+**Nombre y color**; los colores de `clans.yml` siguen disponibles como preestablecidos.
+
 ### Rangos, permisos y miembros
 
 | Rango | Por defecto |
@@ -142,6 +153,17 @@ Solo luchan los miembros con 24 horas en el clan, nunca los invitados. Un clan s
 
 El banco, el mantenimiento diario, el depósito para fundar y las recompensas de guerra **no están en este plugin**: los añade otro plugin mediante la [API de clanes](docs/API.md#clanes). Por ejemplo, QuasoPlugin implementa un banco de DinoCoins con su botón en el menú, sus casillas de permiso, sus líneas de estado y su tema en la guía. Sin plugins conectados, fundar es gratis y no hay mantenimiento.
 
+Con **QuasoPlugin #174**, la cuota diaria es `clanes.mantenimiento-diario × miembros actuales` y sale del
+banco común. Cuentan el líder, los invitados y los desconectados; las invitaciones pendientes no cuentan.
+Por ejemplo, **2 DinoCoins por miembro × 10 miembros = 20 DinoCoins al día**. Cada miembro puede aportar
+según los permisos de su rango. Al unirse o salir alguien cambia la cuota del siguiente cobro, sin otro cargo
+por entrar. El banco muestra el desglose y los días que cubre su saldo.
+
+Para aplicar esta actualización completa, instala **ViciontProtections 3.0.6 y QuasoPlugin #174**. En
+`plugins/QuasoPlugin/config.yml`, `clanes.mantenimiento-diario` conserva su valor pero ahora significa
+**DinoCoins por miembro y día**. Revisa el saldo antes del próximo cobro. Se conservan las cuentas, los
+plazos y la disolución por impago. No es necesario borrar archivos ni migrar las tablas.
+
 ### Comandos de clanes
 
 `/clan` (alias `/clanes`, `/clans`) abre el menú de tu clan, o la guía y tus copias si no tienes ninguno; su primer botón es la **Guía de clanes**. `/prclan` abre el menú del sitio donde estás o, fuera de todo, el panel con tus protecciones, tus clanes y las dos guías.
@@ -160,7 +182,7 @@ El banco, el mantenimiento diario, el depósito para fundar y las recompensas de
 | `/clan territorio aportar\|quitar` · `/clan territorios` · `/clan solicitudes` | Territorios y solicitudes |
 | `/clan limites` | Mostrar u ocultar el borde de los territorios |
 | `/clan permisos` · `/clan ajustes` | Casillas por rango, nombre, color y banderas |
-| `/clan nombre <nombre>` · `/clan color <color>` · `/clan bandera <bandera> <valor>` | Ajustes del líder |
+| `/clan nombre <nombre>` · `/clan color <nombre o #RRGGBB>` · `/clan bandera <bandera> <valor>` | Ajustes según la casilla del rango |
 | `/clan bloque [mantener\|confirmar\|cancelar]` | Cambiar el bloque de clan por el que acabas de colocar, con el centro en el mismo sitio (`mantener`) o en el bloque nuevo (`confirmar`) |
 | `/clan guerra [declarar\|rendirse\|paz]` | Estado y acciones de guerra |
 | `/clan chat` · `/clan modo` · `/cc [mensaje]` | Chat del clan |
@@ -186,7 +208,7 @@ Los permisos de clan de los jugadores siguen la opción `permissions.require-use
 
 ### clans.yml y PlaceholderAPI
 
-`plugins/ViciontProtections/clans.yml` controla la paleta y los prefijos, los nombres de los rangos, los colores elegibles, los permisos por defecto y bloqueados, las banderas permitidas, los formatos del chat y de la etiqueta, los avisos de territorio, los plazos de guerra, el límite de miembros, los días de copia y los textos de la guía. `/pr recargar` lo recarga. Con `clanes.activos: false` se desactivan los clanes.
+`plugins/ViciontProtections/clans.yml` controla la paleta y los prefijos, los nombres de los rangos, los colores preestablecidos, los permisos por defecto y bloqueados, las banderas permitidas, los formatos del chat y de la etiqueta, los avisos de territorio, los plazos de guerra, el límite de miembros, los días de copia y los textos de la guía. `/pr recargar` lo recarga. Con `clanes.activos: false` se desactivan los clanes.
 
 Con PlaceholderAPI instalado: `%viciont_clan%` (etiqueta con color), `%viciont_clan_nombre%`, `%viciont_clan_rango%`, `%viciont_clan_color%` y `%viciont_clan_guerra%` (clan enemigo).
 
@@ -364,7 +386,7 @@ Compila con JDK 21 o posterior y Maven:
 mvn clean verify
 ```
 
-El JAR de `target/ViciontProtections-3.0.5.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard, PlaceholderAPI ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot, EngineHub y PlaceholderAPI deben ser accesibles durante la compilación.
+El JAR de `target/ViciontProtections-3.0.6.jar` incluye SQLite, el conector MySQL y el pool de conexiones. No incluye WorldEdit, WorldGuard, PlaceholderAPI ni la API del servidor. También se genera un JAR de fuentes. Los repositorios de Spigot, EngineHub y PlaceholderAPI deben ser accesibles durante la compilación.
 
 ## ۞ Créditos y licencia
 

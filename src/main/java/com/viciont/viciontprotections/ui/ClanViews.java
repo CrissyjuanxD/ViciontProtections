@@ -275,7 +275,8 @@ public final class ClanViews {
     list.add(new String[] {"/clan solicitudes · territorios", "ofertas de territorio y zonas del clan"});
     list.add(new String[] {"/clan limites", "mostrar el borde del territorio"});
     list.add(new String[] {"/clan permisos", "casillas de cada rango (líder)"});
-    list.add(new String[] {"/clan nombre · color · bandera", "ajustes del clan"});
+    list.add(new String[] {"/clan nombre · bandera", "ajustes del clan"});
+    list.add(new String[] {"/clan color <nombre o #RRGGBB>", "color preestablecido o personalizado"});
     list.add(new String[] {"/clan guerra declarar <clan> <motivo>", "declarar la guerra (líder)"});
     list.add(new String[] {"/clan guerra rendirse [tributo] [condiciones]", "rendirse; el otro bando gana"});
     list.add(new String[] {"/clan guerra paz [condiciones]", "proponer o firmar la paz"});
@@ -632,8 +633,11 @@ public final class ClanViews {
       case "color" -> {
         screen = new Screen("Cambiar color").notice(notice);
         screen.line("{texto}Color actual: " + paint(settings.colorName(clan.color()), clan.color()));
-        screen.options("color", "Color", colorOptions(clan.color()));
-        screen.submit("{acento}✔ {texto}Guardar", "/clan color $(color)" + D, "/clan color ");
+        screen.line("{texto}Elige un color de la lista o escribe tu código HEX y pulsa su botón.");
+        screen.options("color", "Color de la lista", colorOptions(clan.color()));
+        screen.text("hex", "Color personalizado (#RRGGBB)", clan.color(), 7);
+        screen.submit("{acento}✔ {texto}Usar color de lista", "/clan color $(color)" + D, "/clan color ");
+        screen.submit("{acento}✔ {texto}Usar código HEX", "/clan color $(hex)" + D, "/clan color #");
         for (var entry : settings.colors().entrySet())
           screen.button(paint(settings.colorName(entry.getValue()), entry.getValue()), null, "/clan color " + entry.getKey() + D);
         back = "/clan ajustes";
@@ -709,6 +713,8 @@ public final class ClanViews {
     for (var entry : settings.colors().entrySet())
       options.add(new String[] {entry.getKey(), "&" + entry.getValue() + settings.colorName(entry.getValue())});
     options.sort(Comparator.comparing(o -> !settings.colors().get(o[0]).equalsIgnoreCase(current)));
+    if (settings.color(current).isPresent() && settings.colors().values().stream().noneMatch(hex -> hex.equalsIgnoreCase(current)))
+      options.add(0, new String[] {current, "&" + current + current + " (actual)"});
     return options;
   }
 
@@ -749,8 +755,11 @@ public final class ClanViews {
     for (String line : founding.requirements(player)) screen.line("{acento}✦ {texto}" + line);
     screen.line("{suave}Tienes " + ClanWars.duration(draft.expiresAt() - System.currentTimeMillis()) + "; si no, el bloque vuelve a tu inventario.");
     screen.text("nombre", "Nombre del clan (" + settings.nameMin() + "-" + settings.nameMax() + ")", "", settings.nameMax());
-    screen.options("color", "Color", colorOptions(""));
-    screen.submit("{acento}⚑ {texto}Fundar clan", "/clan fundar $(color) $(nombre)" + D, "/clan fundar " + settings.colors().keySet().iterator().next() + " ");
+    screen.line("{texto}Puedes usar un color de la lista o escribir un código HEX. Pulsa el botón correspondiente.");
+    screen.options("color", "Color de la lista", colorOptions(""));
+    screen.text("hex", "Color personalizado (#RRGGBB)", "#B75FFF", 7);
+    screen.submit("{acento}⚑ {texto}Fundar con lista", "/clan fundar $(color) $(nombre)" + D, "/clan fundar " + settings.colors().keySet().iterator().next() + " ");
+    screen.submit("{acento}⚑ {texto}Fundar con HEX", "/clan fundar $(hex) $(nombre)" + D, "/clan fundar #B75FFF ");
     screen.button("{error}✖ {texto}Recuperar el bloque", "{suave}Cancela la fundación", "/clan fundar cancelar");
     screen.back("/clan", "{suave}Portada de clanes; el bloque sigue esperando unos minutos");
     show(player, screen);

@@ -1034,7 +1034,7 @@ public final class ClanManager implements ViciontClansApi, Listener, AutoCloseab
           if (actor != null) requirePermission(clan, actor, "ajustes");
           String hex =
               settings.color(color)
-                  .orElseThrow(() -> new ProtectionException("Elige uno de estos colores: " + String.join(", ", settings.colors().keySet()) + "."));
+                  .orElseThrow(() -> new ProtectionException("Usa un código HEX de 6 dígitos, como #B75FFF, o un color de la lista: " + String.join(", ", settings.colors().keySet()) + "."));
           return persist(clan, clan.withColor(hex))
               .thenApply(
                   next -> {

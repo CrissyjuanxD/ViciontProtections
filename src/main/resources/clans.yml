@@ -54,7 +54,7 @@ rangos:
   aprendiz: 'Aprendiz'
   invitado: 'Invitado'
 
-# Colores que el líder puede elegir para su clan.
+# Colores preestablecidos. También se acepta cualquier #RRGGBB en el diálogo o /clan color.
 colores:
   lila: '#C29BFF'
   rosa: '#F5A8D6'
@@ -190,6 +190,15 @@ guia:
     - '{texto}Un {dato}clan {texto}es un grupo de jugadores con nombre, color, territorio y chat propios.'
     - '{texto}Su nombre sale en el chat público y encima de tu nick. Elige un tema para saber más.'
   temas:
+    colores:
+      titulo: 'Color del clan'
+      icono: '◐'
+      lineas:
+        - '{texto}Al fundar o en {dato}/clan ajustes {texto}puedes elegir un color preestablecido o escribir uno propio en el campo {dato}Color personalizado (#RRGGBB){texto}.'
+        - '{texto}Usa {dato}# {texto}seguido de seis dígitos hexadecimales (0–9 y A–F), por ejemplo {dato}#B75FFF{texto}. Pulsa {dato}Usar código HEX {texto}para guardarlo, o {dato}Usar color de lista {texto}para aplicar el selector.'
+        - '{texto}También puedes escribir {dato}/clan color #B75FFF{texto}. No hace falta que la administración añada ese color a la lista.'
+        - '{texto}El color se guarda con tu clan y se conserva al reiniciar y al recuperarlo de una copia. Se usa en su nombre, chat y etiqueta.'
+        - '{suave}Cambiarlo requiere la casilla {dato}Nombre y color{suave}; el líder puede concederla a otros rangos.'
     clan:
       titulo: '¿Qué es un clan?'
       icono: '۞'

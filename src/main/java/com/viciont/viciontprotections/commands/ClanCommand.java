@@ -260,8 +260,8 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
       case "color" -> {
         Player player = player(sender);
         Clan clan = myClan(player);
-        require(values.length == 1, "Uso: /clan color <" + String.join("|", manager.settings().colors().keySet()) + ">");
         flow.views(n -> views.settings(player, fresh(clan), n), n -> views.form(player, fresh(clan), "color", n));
+        require(values.length == 1, "Uso: /clan color <nombre o #RRGGBB>. Ejemplo: /clan color #B75FFF");
         flow.await(
             manager.recolor(player, clan, values[0]),
             ClanMessages.Theme.PUBLIC,
@@ -381,7 +381,7 @@ public final class ClanCommand implements CommandExecutor, TabCompleter {
       return;
     }
     flow.views(n -> views.open(player, n), n -> views.found(player, n));
-    require(values.length >= 2, "Uso: /clan fundar <color> <nombre>. Colores: " + String.join(", ", manager.settings().colors().keySet()) + ".");
+    require(values.length >= 2, "Uso: /clan fundar <color o #RRGGBB> <nombre>. Colores: " + String.join(", ", manager.settings().colors().keySet()) + ".");
     String name = String.join(" ", Arrays.copyOfRange(values, 1, values.length));
     flow.await(
         founding.found(player, values[0], name),

@@ -1,10 +1,24 @@
-# Validación de ViciontProtections 3.0.5
+# Validación de ViciontProtections 3.0.6
 
 Compatibilidad objetivo: Spigot y Paper 1.21–26.2. El código se compila contra la API de Spigot 1.21 con bytecode Java 21 y no usa clases NMS. La API de diálogos de Spigot 1.21.6+ se carga solo cuando el servidor la incluye.
 
 ## Pruebas automatizadas
 
-`mvn clean verify`: **29 pruebas**, sin fallos.
+`mvn clean verify`: **34 pruebas**, sin fallos (26 de octubre de 2026).
+
+Nuevas comprobaciones de 3.0.6:
+
+- HEX fuera de la paleta, normalización de mayúsculas, colores preestablecidos y rechazo de valores incompletos o inválidos.
+- Diálogos reales generados por `ClanViews`: selector y campo HEX independientes, conservación del color actual, comandos de fundación y edición y conversión a la API de Spigot.
+- Persistencia del color personalizado al cerrar y reabrir SQLite, y en las copias de clanes disueltos.
+- Guía nueva disponible con una configuración anterior, sin sobrescribir los textos personalizados ni duplicar temas al recargar.
+
+La integración acompañante **QuasoPlugin #174** pasa **8 pruebas** del banco: cobro por todos los miembros,
+un cobro al día, altas y bajas entre cobros o durante un aporte asíncrono, deuda y pago, disolución por impago, cuota cero, días cubiertos
+y protección frente a desbordamientos. El JAR de QuasoPlugin también se ha compilado y empaquetado.
+
+Estas comprobaciones son automatizadas; no se ha repetido en 3.0.6 la sesión multijugador de las versiones
+anteriores que se documenta abajo. La revisión visual dentro de Minecraft queda pendiente.
 
 - Dimensiones exactas, bordes y límites inválidos.
 - Jerarquía de creador/propietario/miembro y permisos explícitos.

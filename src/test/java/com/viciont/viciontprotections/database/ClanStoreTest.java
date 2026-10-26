@@ -129,6 +129,22 @@ class ClanStoreTest {
   }
 
   @Test
+  void customHexSurvivesDatabaseReopeningAndTheDissolvedClanBackup() throws Exception {
+    var database = open("custom-color.db");
+    var store = new ClanStore(database, null);
+    Clan original = clan("Color propio").withColor("#12ABEF");
+    store.save(original).get(5, TimeUnit.SECONDS);
+    store.saveBackup(new ClanBackup(original, 2000, "Prueba", "150 × 150")).get(5, TimeUnit.SECONDS);
+    database.close();
+
+    database = open("custom-color.db");
+    store = new ClanStore(database, null);
+    assertEquals(original, store.loadClans().getFirst());
+    assertEquals("#12ABEF", store.loadBackups().getFirst().clan().color());
+    database.close();
+  }
+
+  @Test
   void copiesClansFromSqliteIntoAnEmptyDatabase() throws Exception {
     var local = open("local.db");
     var localClans = new ClanStore(local, null);

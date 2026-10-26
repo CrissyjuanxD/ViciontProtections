@@ -82,13 +82,17 @@ public final class ClanSettings {
     if (colors.isEmpty()) colors.put("lila", "#C29BFF");
     topics.clear();
     ConfigurationSection guide = section("guia.temas");
-    for (String key : guide.getKeys(false))
+    // Incluye temas nuevos del JAR también al actualizar un clans.yml existente.
+    Set<String> topicKeys = new LinkedHashSet<>(guide.getKeys(false));
+    ConfigurationSection defaultGuide = config.getDefaults().getConfigurationSection("guia.temas");
+    if (defaultGuide != null) topicKeys.addAll(defaultGuide.getKeys(false));
+    for (String key : topicKeys)
       topics.add(
           new Topic(
               key,
-              guide.getString(key + ".titulo", key),
-              guide.getString(key + ".icono", "۞"),
-              guide.getStringList(key + ".lineas")));
+              config.getString("guia.temas." + key + ".titulo", key),
+              config.getString("guia.temas." + key + ".icono", "۞"),
+              config.getStringList("guia.temas." + key + ".lineas")));
   }
 
   private ConfigurationSection section(String path) {
@@ -162,12 +166,12 @@ public final class ClanSettings {
     return Collections.unmodifiableMap(colors);
   }
 
-  /** Clave del color (lila) o el propio #RRGGBB si está en la paleta. */
+  /** Color preestablecido (lila) o cualquier hexadecimal completo #RRGGBB. */
   public Optional<String> color(String value) {
     if (value == null) return Optional.empty();
     String key = value.trim().toLowerCase(Locale.ROOT);
     if (colors.containsKey(key)) return Optional.of(colors.get(key));
-    return colors.values().stream().filter(hex -> hex.equalsIgnoreCase(key)).findFirst();
+    return key.matches("#[0-9a-f]{6}") ? Optional.of(key.toUpperCase(Locale.ROOT)) : Optional.empty();
   }
 
   public String colorName(String hex) {
